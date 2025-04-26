@@ -25,15 +25,10 @@ void static resizeImage() {
 	resizingFinished = false;
 	int key = -1;
 	
-
-
-
-
 	std::cout << "Welcome to the Resizing Function" << std::endl;
 	std::cout << "Please enter file name" << std::endl;
 	std::cin >> fileName; //Personalised file name entry
 
-	//Making sure user can leave program when they want
 
 	cv::Mat image = cv::imread("../img/" + fileName);
 	if (image.empty())
