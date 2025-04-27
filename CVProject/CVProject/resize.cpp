@@ -10,9 +10,6 @@ static int height;
 static int size;
 static bool resizingFinished = false;
 
-void static onConfirmButton(int state, void* userdata) {
-	resizingFinished = true;
-}
 
 void static resizeImage() {
 	while (true){
@@ -28,15 +25,10 @@ void static resizeImage() {
 	resizingFinished = false;
 	int key = -1;
 	
-
-
-
-
 	std::cout << "Welcome to the Resizing Function" << std::endl;
 	std::cout << "Please enter file name" << std::endl;
 	std::cin >> fileName; //Personalised file name entry
 
-	//Making sure user can leave program when they want
 
 	cv::Mat image = cv::imread("../img/" + fileName);
 	if (image.empty())
@@ -87,15 +79,16 @@ void static resizeImage() {
 	cv::createTrackbar("Height", "Trackbar Height", &height, 4000);
 
 
-
-	//Button doesn't work
+	//Button that doesn't work
 	//cv::createButton("Confirm Size", onConfirmButton, 0, false);
+
 	copyImage = image;
 	cv::imshow("Original Image", image);
 	cv::imshow("TextWindow", imageText);
 
 	while (!resizingFinished && !image.empty()) {
 		if (!activateProportionalScaling) {
+			//Resizing with width and height
 
 			int safeWidth = std::max(1, width); //Avoids crash with resize of 0
 			int safeHeight = std::max(1, height); //Avoids crash with resize of 0
@@ -103,10 +96,12 @@ void static resizeImage() {
 			cv::resize(image, copyImage, cv::Size(safeWidth, safeHeight), 0, 0);
 		} else {
 
-			double safeSize = std::max(1, size)/100.0;
+			//Resizing with proportional size
+			double safeSize = std::max(1, size)/100.0; //Avoids crash with resize of 0
 			cv::resize(image, copyImage, cv::Size(), safeSize, safeSize);
 
 		}
+		//Displaying edit image in real time and waiting for input
 		cv::imshow("New Image", copyImage);
 		key = cv::waitKey(30);
 		std::cout << key << std::endl;
@@ -133,6 +128,10 @@ void static resizeImage() {
 				cv::createTrackbar("Height", "Trackbar Height", &height, 4000);
 
 			}
+			//Resets values so that image doesn't change sizes after changing resizing modes
+			width = copyImage.cols;
+			height = copyImage.rows;
+			size = 100;
 			image = copyImage;
 
 		}
