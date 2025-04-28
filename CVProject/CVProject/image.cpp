@@ -1,8 +1,18 @@
 #include "image.h"
 
-Image::Image(std::string path) {
+
+Image::Image() //Empty image
+{
+	width = 0;
+	height = 0;
+	size = 0;
+	brightness = 0;
+	image = cv::Mat(); 
+}
+
+Image::Image(cv::Mat imageT) {
 	//Initialization of values
-	image = cv::imread("../img/" + path);
+	image = imageT;
 	width = image.cols;
 	height = image.rows;
 	size = 100;
@@ -17,6 +27,10 @@ void Image::showImage() {
 	cv::waitKey(0);
 
 	cv::destroyAllWindows();
+}
+
+cv::Mat Image::getImage() {
+	return image;
 }
 
 void Image::saveImage() {
