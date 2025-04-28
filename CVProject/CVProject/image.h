@@ -17,11 +17,12 @@ private:
 	//Add parameters for other functions here
 public:
 	Image();
-	Image(std::string path);
+	Image(cv::Mat image);
 	void resizeImage();
 	void brightnessImage();
 	void showImage();
 	void saveImage();
+	cv::Mat getImage();
 };
 
 
