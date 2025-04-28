@@ -159,6 +159,9 @@ void Image::resizeImage() {
 			std::cout << key << std::endl;
 		}
 
+		image = copyImage;
+
+
 		cv::destroyAllWindows();
 		std::cout << "Do you want to confirm changes? [Y/N]" << std::endl;
 		std::cin >> input;
