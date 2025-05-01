@@ -1,19 +1,58 @@
 #include "menu.h"
 #include "image.h"
+#include "library.h"
 
-void Menu::runMenu() {
+
+
+void Menu::showMenuForMultipleImages(std::vector<Image> images) { //This function displays operations for a set of images
+	int typeOfFile; //0 == image, 1 == video, 2==exit
+	int operation;
 	std::string fileName;
-
-	std::cout << "Please type the file name" << std::endl;
-	std::cin >> fileName;
-	image = new Image(fileName);
-
+	Library library;
+	bool exitProgram = false;
 	while (true) {
-		int typeOfFile; //0 == image, 1 == video, 2==exit
-		int operation;
-		bool exitProgram = false;
+		std::cout << "Welcome to the Image Editor" << std::endl;
+		std::cout << "Please type number of desired operation" << std::endl;
+		std::cout << "   0: exit" << std::endl;
+		std::cout << "   1: show images" << std::endl;
+		std::cout << "   2: Stitching" << std::endl;
+
+		std::cin >> operation;
+
+		switch (operation)
+		{
+		case 0:
+			exitProgram = true;
+			break;
+		case 1:
+			for (int i = 0; i < images.size(); i++)
+			{
+				images.at(i).showImage();
+			}
+			break;
+		case 2:
+			//TODO stitching function here
+			break;
+		}
+
+		cv::destroyAllWindows();
+
+		if (exitProgram) {
+			break;
+		}
+	}
+
+	}
 
 
+void Menu::showMenuForImage(Image *image) { //This function displays operations for a single image
+	int typeOfFile; //0 == image, 1 == video, 2==exit
+	int operation;
+	cv::Mat newImage;
+	std::string fileName;
+	Library library;
+	bool exitProgram = false;
+	while (true) {
 		std::cout << "Welcome to the Image Editor" << std::endl;
 		std::cout << "Please type number of desired operation" << std::endl;
 		std::cout << "   0: exit" << std::endl;
@@ -23,7 +62,6 @@ void Menu::runMenu() {
 		std::cout << "   4: Dilation/Erosion" << std::endl;
 		std::cout << "   5: Resizing" << std::endl;
 		std::cout << "   6: Lighten/Darken" << std::endl;
-		std::cout << "   7: Panorama/Stitching" << std::endl;
 		std::cout << "   8: Canny edge detection" << std::endl;
 		std::cin >> operation;
 
@@ -36,21 +74,24 @@ void Menu::runMenu() {
 			image->showImage();
 			break;
 		case 2:
-			std::cout << "Please type the file name" << std::endl;
+			std::cout << "Please type the new file to read" << std::endl;
 			std::cin >> fileName;
-			image = new Image(fileName);
+			newImage = library.getImage(fileName);
+			*image = Image(newImage);
 			break;
 		case 3:
-			image->saveImage();
+			std::cout << "Please type the name of the file with extension" << std::endl;
+			std::cin >> fileName;
+			library.saveImage(image->getImage(), fileName);
 			break;
 		case 4:
 			std::cout << "Chosen: Dilation/Erosion" << std::endl;
-			//Function for dilation
+			//Method for dilation
 			break;
 
 		case 5:
 			std::cout << "Chose: Resizing" << std::endl;
-			image->resizeImage(); 	//Function for Resizing
+			image->resizeImage(); 	//Method for Resizing
 			break;
 
 		case 6:
@@ -59,10 +100,6 @@ void Menu::runMenu() {
 			break;
 
 		case 7:
-			std::cout << "Chosen: Panorama/Stitching" << std::endl;
-			break;
-
-		case 8:
 			std::cout << "CHosen: Canny edge detection" << std::endl;
 			break;
 		}
@@ -74,3 +111,65 @@ void Menu::runMenu() {
 		}
 	}
 }
+
+void Menu::runMenu() {
+	std::string fileName;
+	Library library;
+
+
+	while (true) {
+		int typeOfFile; //0 == image, 1 == video, 2==exit
+		int operation;
+		bool exitProgram = false;
+		int numberOfImages;
+		cv::Mat libImage;
+		Image image;
+
+		std::vector<std::string> imagesNames;
+		std::vector<Image> images;
+
+		std::cout << "Welcome to the Image Editor" << std::endl;
+		std::cout << "Please select what you will work with" << std::endl;
+		std::cout << "   0: exit" << std::endl;
+		std::cout << "   1: One Image" << std::endl;
+		std::cout << "   2: Multiple Images" << std::endl;
+		std::cout << "   3: One Video" << std::endl;
+		std::cin >> operation;
+		switch (operation)
+		{
+		case 0:
+			exitProgram = true;
+			break;
+		case 1:
+			std::cout << "Please type the file name" << std::endl;
+			std::cin >> fileName;
+			libImage = library.getImage(fileName); //library reads the image
+			image = Image(libImage);
+			showMenuForImage(&image);
+			break;
+
+		case 2:
+			std::cout << "Please enter number of images" << std::endl;
+			std::cin >> numberOfImages;
+			for (int i = 0; i < numberOfImages; i++) {
+				std::cout << "Please file name of image" << i+1<< std::endl;
+				std::cin >> fileName;
+				imagesNames.push_back(fileName);
+			}
+
+			images = library.getImages(imagesNames);
+
+			showMenuForMultipleImages(images);
+			break;
+		case 3:
+			//showMenuForVideoCapture();
+			break;
+		}
+
+		if (exitProgram) {
+			break;
+		}
+	}
+}
+
+
