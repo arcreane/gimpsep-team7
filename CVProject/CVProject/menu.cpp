@@ -85,8 +85,10 @@ void Menu::showMenuForImage(Image *image) { //This function displays operations 
 			library.saveImage(image->getImage(), fileName);
 			break;
 		case 4:
+// MISSING DILATION JOSE G
 			std::cout << "Chosen: Dilation/Erosion" << std::endl;
 			//Method for dilation
+			image->erosionImage();
 			break;
 
 		case 5:

@@ -20,6 +20,9 @@ public:
 	Image(cv::Mat image);
 	void resizeImage();
 	void brightnessImage();
+
+	void erosionImage();  // GUI-based erosion function
+
 	void showImage();
 	void saveImage();
 	cv::Mat getImage();

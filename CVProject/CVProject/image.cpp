@@ -258,3 +258,52 @@ void Image::brightnessImage() {
 		}
 	}
 }
+
+void Image::erosionImage() {
+	// jose g
+	cv::Mat originalImage = image;
+	cv::Mat processedImage;
+	std::string input;
+	int erosionSize = 1;
+	int key = -1;
+
+	// windows creation
+	cv::namedWindow("Original Image", cv::WINDOW_AUTOSIZE);
+	cv::namedWindow("Eroded Image", cv::WINDOW_AUTOSIZE);
+	cv::namedWindow("Erosion Trackbar", cv::WINDOW_AUTOSIZE);
+
+	// trackbar creation
+	cv::createTrackbar("Erosion Size", "Erosion Trackbar", &erosionSize, 20);
+
+	cv::imshow("Original Image", originalImage);
+
+	while (true) {
+		int safeSize = std::max(1, erosionSize);
+
+		// applying erosion
+		cv::Mat element = cv::getStructuringElement(
+			cv::MORPH_RECT,
+			cv::Size(2 * safeSize + 1, 2 * safeSize + 1),
+			cv::Point(safeSize, safeSize)
+		);
+		cv::erode(originalImage, processedImage, element);
+
+		// result
+		cv::imshow("Eroded Image", processedImage);
+
+		//waiting for confirm
+		key = cv::waitKey(30);
+		if (key == 'c') break;
+	}
+
+	// confirm/discard
+	cv::destroyAllWindows();
+	std::cout << "Do you want to confirm changes? [Y/N]" << std::endl;
+	std::cin >> input;
+
+	if (input == "Y") {
+		image = processedImage;  // save in object
+	} else {
+		image = originalImage;   // restores old image
+	}
+}
