@@ -1,13 +1,12 @@
 #include "menu.h"
 #include "image.h"
 #include "library.h"
+#include "magicPainter.h"
 
 
 
 void Menu::showMenuForMultipleImages(std::vector<Image> images) { //This function displays operations for a set of images
-	int typeOfFile; //0 == image, 1 == video, 2==exit
 	int operation;
-	std::string fileName;
 	Library library;
 	bool exitProgram = false;
 	while (true) {
@@ -114,6 +113,57 @@ void Menu::showMenuForImage(Image *image) { //This function displays operations 
 	}
 }
 
+void Menu::showMenuCamera() {
+	int operation;
+	Library library;
+	MagicPainter magicPainter;
+	cv::Mat paintedImage;
+	std::string fileName;
+	std::string input;
+
+	bool exitProgram = false;
+	while (true) {
+		std::cout << "Welcome to the Image Editor" << std::endl;
+		std::cout << "Please type number of desired operation" << std::endl;
+		std::cout << "   0: exit" << std::endl;
+		std::cout << "   1: Detect new color" << std::endl;
+		std::cout << "   2: Start Painting" << std::endl;
+
+		std::cin >> operation;
+
+		switch (operation)
+		{
+		case 0:
+			exitProgram = true;
+			break;
+		case 1:
+			magicPainter.addColour();
+			break;
+		case 2:
+			magicPainter.startPainting(paintedImage);
+			cv::imshow("Image", paintedImage);
+			cv::waitKey(0);
+			std::cout << "Do you want to save the image? [Y/N]" << std::endl;
+			std::cin >> input;
+			if (input == "Y") {
+				std::cout << "Please type the name of the file with extension" << std::endl;
+				std::cin >> fileName;
+				library.saveImage(paintedImage, fileName);
+			}
+			break;
+		
+
+		}
+
+		cv::destroyAllWindows();
+
+		if (exitProgram) {
+			break;
+		}
+	}
+
+}
+
 void Menu::runMenu() {
 	std::string fileName;
 	Library library;
@@ -136,6 +186,8 @@ void Menu::runMenu() {
 		std::cout << "   1: One Image" << std::endl;
 		std::cout << "   2: Multiple Images" << std::endl;
 		std::cout << "   3: One Video" << std::endl;
+		std::cout << "   4: Magic Painter" << std::endl;
+
 		std::cin >> operation;
 		switch (operation)
 		{
@@ -166,7 +218,11 @@ void Menu::runMenu() {
 		case 3:
 			//showMenuForVideoCapture();
 			break;
+		case 4:
+			showMenuCamera();
+			break;
 		}
+
 
 		if (exitProgram) {
 			break;
