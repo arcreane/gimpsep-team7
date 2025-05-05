@@ -277,6 +277,8 @@ void Image::erosionImage() {
 
 	cv::imshow("Original Image", originalImage);
 
+	std::cout << "Press [C] To CONFIRM " << std::endl;
+
 	while (true) {
 		int safeSize = std::max(1, erosionSize);
 
@@ -303,10 +305,54 @@ void Image::erosionImage() {
 
 	if (input == "Y") {
 		image = processedImage;  // save in object
-	} else {
+	} else if (input == "N") {
 		image = originalImage;   // restores old image
 	}
 }
+
+
+void Image::dilationImage() {
+	cv::Mat dilatedImage;
+	cv::Mat originalImage = image.clone(); // backup
+	int dilationSize = 1;
+	int key = -1;
+	std::string input;
+
+	// create windows
+	cv::namedWindow("Dilation Trackbar", cv::WINDOW_AUTOSIZE);
+	cv::namedWindow("Original Image", cv::WINDOW_AUTOSIZE);
+	cv::namedWindow("Dilated Image", cv::WINDOW_AUTOSIZE);
+
+	cv::createTrackbar("Dilation Size", "Dilation Trackbar", &dilationSize, 20);
+
+	std::cout << "Press [C] To CONFIRM " << std::endl;
+
+	while (true) {
+		int kernelSize = 2 * dilationSize + 1;
+		cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
+													cv::Size(kernelSize, kernelSize));
+		cv::dilate(originalImage, dilatedImage, element);
+
+		cv::imshow("Original Image", originalImage);
+		cv::imshow("Dilated Image", dilatedImage);
+
+		key = cv::waitKey(30);
+		if (key == 'c') break; // confirm edit
+	}
+
+	image = dilatedImage; // save the dilated image into the object
+	cv::destroyAllWindows();
+
+	std::cout << "Do you want to confirm changes? [Y/N]" << std::endl;
+	std::cin >> input;
+	if (input == "Y") {
+		image = dilatedImage;  // save in an object
+	} else if (input == "N") {
+		image = originalImage;   // restores old image
+	} // revert the image
+
+}
+
 
 int cannyLowThreshold = 100;
 int cannyHighThreshold = 200;

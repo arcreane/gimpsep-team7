@@ -58,9 +58,10 @@ void Menu::showMenuForImage(Image *image) { //This function displays operations 
 		std::cout << "   1: show image" << std::endl;
 		std::cout << "   2: read New Image" << std::endl;
 		std::cout << "   3: Save Image" << std::endl;
-		std::cout << "   4: Dilation/Erosion" << std::endl;
+		std::cout << "   4: Erosion" << std::endl;
 		std::cout << "   5: Resizing" << std::endl;
 		std::cout << "   6: Lighten/Darken" << std::endl;
+		std::cout << "   7: Dilation" << std::endl;
 		std::cout << "   8: Canny edge detection" << std::endl;
 		std::cin >> operation;
 
@@ -85,7 +86,7 @@ void Menu::showMenuForImage(Image *image) { //This function displays operations 
 			break;
 		case 4:
 // MISSING DILATION JOSE G
-			std::cout << "Chosen: Dilation/Erosion" << std::endl;
+			std::cout << "Chosen: Erosion" << std::endl;
 			//Method for dilation
 			image->erosionImage();
 			break;
@@ -100,8 +101,8 @@ void Menu::showMenuForImage(Image *image) { //This function displays operations 
 			image->brightnessImage();
 			break;
 		case 7: 
-			std::cout << "Chosen: Dilation/Erosion" << std::endl;
-			std::cout << "Not implemented yet" << std::endl;
+			std::cout << "Chosen: Dilation" << std::endl;
+			image->dilationImage();
 			break;
 		case 8:
 			std::cout << "Chosen: Canny edge detection" << std::endl;
