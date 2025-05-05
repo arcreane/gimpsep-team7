@@ -99,9 +99,13 @@ void Menu::showMenuForImage(Image *image) { //This function displays operations 
 			std::cout << "Chosen: Lighten/Darken" << std::endl;
 			image->brightnessImage();
 			break;
-
-		case 7:
-			std::cout << "CHosen: Canny edge detection" << std::endl;
+		case 7: 
+			std::cout << "Chosen: Dilation/Erosion" << std::endl;
+			std::cout << "Not implemented yet" << std::endl;
+			break;
+		case 8:
+			std::cout << "Chosen: Canny edge detection" << std::endl;
+			image->cannyEdgeDetection();
 			break;
 		}
 
