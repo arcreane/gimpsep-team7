@@ -307,3 +307,89 @@ void Image::erosionImage() {
 		image = originalImage;   // restores old image
 	}
 }
+
+int cannyLowThreshold = 100;
+int cannyHighThreshold = 200;
+bool cannyTrackbarCallbackActive = true;
+//These callbacks are used to forbid the user to set a low threshold higher than the high threshold and vice versa
+//How it works is if the user tries to set a low threshold higher than the high threshold, the bar freezes not letting it to go higher
+//The same happens with the high threshold, but in reverse
+//cannyTrackbarCallbackActive is used to avoid crash, since setTrackbarPos moves the bar what triggers the callback again, which makes a recursive loop.
+//With cannyTrackbarCallbackActive set on false, the bar position is just corrected once instead of infinite times.
+void onLowThresholdChange(int, void*) {
+	if (!cannyTrackbarCallbackActive) return;
+
+	cannyTrackbarCallbackActive = false;
+	if (cannyLowThreshold > cannyHighThreshold) {
+		cannyLowThreshold = cannyHighThreshold; 
+		cv::setTrackbarPos("Low Threshold", "Canny Edge Trackbars", cannyLowThreshold);
+	}
+	cannyTrackbarCallbackActive = true;
+}
+
+void onHighThresholdChange(int, void*) {
+	if (!cannyTrackbarCallbackActive) return;
+
+	cannyTrackbarCallbackActive = false;
+	if (cannyHighThreshold < cannyLowThreshold) {
+		cannyHighThreshold = cannyLowThreshold;
+		cv::setTrackbarPos("High Threshold", "Canny Edge Trackbars", cannyHighThreshold);
+	}
+	cannyTrackbarCallbackActive = true;
+}
+
+void Image::cannyEdgeDetection()
+{
+	cv::Mat originalImage = image;
+	cv::Mat processedImage;
+	std::string input;
+	int kernelSize = 3;
+	int key = -1;
+	// windows creation
+	cv::namedWindow("Original Image", cv::WINDOW_AUTOSIZE);
+	cv::namedWindow("Canny Edged Image", cv::WINDOW_AUTOSIZE);
+	cv::namedWindow("Canny Edge Trackbars", cv::WINDOW_AUTOSIZE);
+	// trackbar creation
+	cv::createTrackbar("Low Threshold", "Canny Edge Trackbars", &cannyLowThreshold, 255, onLowThresholdChange);
+	cv::createTrackbar("High Threshold", "Canny Edge Trackbars", &cannyHighThreshold, 255, onHighThresholdChange);
+	cv::createTrackbar("Kernel Size", "Canny Edge Trackbars", &kernelSize, 7);
+	cv::imshow("Original Image", originalImage);
+	while (true) {
+		int safeLowThreshold = std::max(1, cannyLowThreshold);
+		int safeHighThreshold = std::max(1, cannyHighThreshold);
+		// kernel size must be odd and greater than 3
+		if (kernelSize < 3) {
+			kernelSize = 3;
+		}
+		if (kernelSize % 2 == 0) {
+			kernelSize++;
+		}
+		int safeKernelSize = kernelSize;
+		// applying canny edge detection
+		cv::Canny(originalImage, processedImage, safeLowThreshold, safeHighThreshold, safeKernelSize,true);
+		// result
+		cv::imshow("Canny Edged Image", processedImage);
+		//waiting for confirm
+		key = cv::waitKey(30);
+		if (key == 'c') break;
+	}
+
+	//save edge detection
+	std::cout << "Do you want to save the changes? [Y/N]" << std::endl;
+	std::cin >> input;
+	//Since this new image is just an edge detection, we're not going to overwrite the original image by default
+	//Instead, we're going to ask the user if they want to save it in other file or overwrite if they want
+	if (input == "Y") {
+		std::cout << "Do you want to overwrite the image with the canny detection one? [Y/N]" << std::endl;
+		std::cin >> input;
+		if (input == "Y") {
+			image = processedImage; 
+		}
+		else if (input == "N") {
+			std::cout << "The image will be saved inside images folder instead." << std::endl;
+			std::cout << "Type the name of the new image(with extension)" << std::endl;
+			std::cin >> input;
+			cv::imwrite("../img/" + input, processedImage);
+		}
+	}
+}

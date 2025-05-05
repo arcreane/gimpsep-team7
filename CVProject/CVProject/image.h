@@ -23,6 +23,7 @@ public:
 
 	void erosionImage();  // GUI-based erosion function
 
+	void cannyEdgeDetection();
 	void showImage();
 	void saveImage();
 	cv::Mat getImage();
