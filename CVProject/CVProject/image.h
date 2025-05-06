@@ -22,6 +22,9 @@ public:
 	void brightnessImage();
 
 	void erosionImage();  // GUI-based erosion function
+	void dilationImage();
+
+	void cannyEdgeDetection();
 
 	void showImage();
 	void saveImage();
