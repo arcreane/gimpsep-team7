@@ -3,7 +3,8 @@
 #include "library.h"
 #include "magicPainter.h"
 
-
+using namespace std;
+using namespace cv;
 
 void Menu::showMenuForMultipleImages(std::vector<Image> images) { //This function displays operations for a set of images
 	int operation;
@@ -31,6 +32,16 @@ void Menu::showMenuForMultipleImages(std::vector<Image> images) { //This functio
 			break;
 		case 2:
 			//TODO stitching function here
+			cout << "Stitching images." << endl;
+			vector<Mat> imageMats;
+
+			for (Image& img : images) {
+				imageMats.push_back(img.getImage());
+			}
+
+
+			Image panoImage;
+			panoImage.stitchImages(imageMats);
 			break;
 		}
 
@@ -207,19 +218,32 @@ void Menu::runMenu() {
 			showMenuForImage(&image);
 			break;
 
-		case 2:
+		case 2: {
 			std::cout << "Please enter number of images" << std::endl;
 			std::cin >> numberOfImages;
 			for (int i = 0; i < numberOfImages; i++) {
-				std::cout << "Please file name of image" << i+1<< std::endl;
+				std::cout << "Please file name of image" << i + 1 << std::endl;
 				std::cin >> fileName;
 				imagesNames.push_back(fileName);
 			}
 
 			images = library.getImages(imagesNames);
 
+			bool hasEmpty = false;
+			for (size_t i = 0; i < images.size(); ++i) {
+				if (images[i].getImage().empty()) {
+					std::cout << "Warning: Image " << imagesNames[i] << " could not be loaded or is empty." << std::endl;
+					hasEmpty = true;
+				}
+			}
+			if (hasEmpty) {
+				std::cout << "Cannot continue with empty images. Please check filenames." << std::endl;
+				break;
+			}
+
 			showMenuForMultipleImages(images);
 			break;
+		}
 		case 3:
 			//showMenuForVideoCapture();
 			break;

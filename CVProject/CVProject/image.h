@@ -6,6 +6,9 @@
 #include <opencv2/core.hpp>
 #include <iostream>
 
+using namespace std;
+using namespace cv;
+
 class Image
 {
 private:
@@ -25,6 +28,8 @@ public:
 	void dilationImage();
 
 	void cannyEdgeDetection();
+
+	void stitchImages(const vector<Mat>& images);
 
 	void showImage();
 	void saveImage();
