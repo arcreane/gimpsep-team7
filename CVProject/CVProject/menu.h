@@ -12,11 +12,11 @@
 class Menu
 {
 private:
-	//Add parameters for other functions here
 public:
-	void runMenu();
-	void showMenuForImage(Image* image);
-	void showMenuForMultipleImages(std::vector<Image> images);
+	void runMenu();												//running the menu
+	void showMenuForImage(Image* image);						//menu for operations for 1 image
+	void showMenuCamera();										//camera operations
+	void showMenuForMultipleImages(std::vector<Image> images);	//Operations with multiple images
 };
 
 
