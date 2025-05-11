@@ -1,5 +1,8 @@
 #include "image.h"
+#include <opencv2/stitching.hpp>
 
+using namespace std;
+using namespace cv;
 
 Image::Image() //Empty image
 {
@@ -437,5 +440,44 @@ void Image::cannyEdgeDetection()
 			std::cin >> input;
 			cv::imwrite("../img/" + input, processedImage);
 		}
+	}
+}
+
+
+void Image::stitchImages(const vector<Mat>& images) {
+	Mat pano;
+	Ptr<Stitcher> stitcher = Stitcher::create(Stitcher::PANORAMA);
+
+	Stitcher::Status status = stitcher->stitch(images, pano);
+
+	if (status != Stitcher::OK) {
+		cout << "\n\nError during stitching. Error code: " << int(status) << endl;
+		cout << "Try using better images with more texture or overlap.\n\n" << endl;
+		return;
+	}
+
+	image = pano;
+	width = image.cols;
+	height = image.rows;
+
+	cout << "Panorama created successfully" << endl;
+
+	namedWindow("Panorama", WINDOW_NORMAL);
+	imshow("Panorama", pano);
+	waitKey(0);
+	destroyAllWindows();
+
+	string save;
+	cout << "Do you want to save a panorama?" << endl;
+	cin >> save;
+
+	if (save == "y" || save == "Y") {
+		string fileName;
+
+		cout << "Enter filename (with extension): ";
+		cin >> fileName;
+
+		imwrite("../img/" + fileName, pano);
+		cout << "Image saved to ../img/" + fileName  << "\n\n" << endl;
 	}
 }
