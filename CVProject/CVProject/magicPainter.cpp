@@ -54,7 +54,7 @@ void MagicPainter::addColour() {
 	cv::createTrackbar("Hue Min", "Trackbars", &hmin, 179);
 	cv::createTrackbar("Hue Max", "Trackbars", &hmin, 179);
 	cv::createTrackbar("Sat Min", "Trackbars", &smin, 255);
-	cv::createTrackbar("Sat Min", "Trackbars", &smax, 255);
+	cv::createTrackbar("Sat Max", "Trackbars", &smax, 255);
 	cv::createTrackbar("Val Min", "Trackbars", &vmin, 255);
 	cv::createTrackbar("Val Max", "Trackbars", &vmax, 255);
 
