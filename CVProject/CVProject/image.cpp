@@ -1,6 +1,9 @@
 #include "image.h"
 #include <opencv2/stitching.hpp>
 
+#include "neural_mosaic.h"
+
+
 using namespace std;
 using namespace cv;
 
@@ -481,3 +484,33 @@ void Image::stitchImages(const vector<Mat>& images) {
 		cout << "Image saved to ../img/" + fileName  << "\n\n" << endl;
 	}
 }
+
+
+
+void Image::neuralMosaic() {
+	int rows, cols;
+	std::cout << "Enter number of rows: ";
+	std::cin >> rows;
+	std::cout << "Enter number of columns: ";
+	std::cin >> cols;
+
+	cv::Mat result = applyNeuralMosaic(image, rows, cols);
+
+	cv::imshow("Neural Mosaic Result", result);
+	std::cout << "Press any key to continue..." << std::endl;
+	cv::waitKey(0);
+
+	std::cout << "Do you want to confirm changes? [Y/N]" << std::endl;
+	std::string input;
+	std::cin >> input;
+
+	if (input == "Y" || input == "y") {
+		image = result;
+	}
+
+	cv::destroyAllWindows();
+}
+
+
+
+
