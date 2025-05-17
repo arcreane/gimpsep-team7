@@ -31,6 +31,9 @@ public:
 
 	void stitchImages(const vector<Mat>& images);
 
+	void neuralMosaic();
+
+
 	void showImage();
 	void saveImage();
 	cv::Mat getImage();
