@@ -17,6 +17,7 @@ public:
 	void showMenuForImage(Image* image);						//menu for operations for 1 image
 	void showMenuCamera();										//camera operations
 	void showMenuForMultipleImages(std::vector<Image> images);	//Operations with multiple images
+	void showFaceSwapMenu();
 };
 
 

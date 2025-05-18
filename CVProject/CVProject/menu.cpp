@@ -3,6 +3,9 @@
 #include "library.h"
 #include "magicPainter.h"
 
+// new
+#include "faceSwap.h"
+
 using namespace std;
 using namespace cv;
 
@@ -203,6 +206,7 @@ void Menu::runMenu() {
 		std::cout << "   2: Multiple Images" << std::endl;
 		std::cout << "   3: One Video" << std::endl;
 		std::cout << "   4: Magic Painter" << std::endl;
+		std::cout << "   5: Face Swap" << std::endl;
 
 		std::cin >> operation;
 		switch (operation)
@@ -250,6 +254,8 @@ void Menu::runMenu() {
 		case 4:
 			showMenuCamera();
 			break;
+		case 5:
+			showFaceSwapMenu();
 		}
 
 
@@ -258,5 +264,54 @@ void Menu::runMenu() {
 		}
 	}
 }
+
+// new
+void Menu::showFaceSwapMenu() {
+	FaceSwap faceSwap;
+
+	std::cout << "Face Swap Camera Mode\n";
+	cv::VideoCapture cap(0);
+	if (!cap.isOpened()) {
+		std::cerr << "Error: cannot open camera\n";
+		return;
+	}
+
+	cv::Mat userImg, targetImg, result;
+	cv::Rect userRect, targetRect;
+	std::string fileName;
+
+	Library library;
+
+	std::cout << "Press SPACE to capture your face...\n";
+	while (true) {
+		cap >> userImg;
+		if (userImg.empty()) break;
+		cv::imshow("Camera", userImg);
+		if (cv::waitKey(30) == ' ') break;
+	}
+	cv::destroyWindow("Camera");
+
+	std::cout << "Enter target image filename: ";
+	std::cin >> fileName;
+	targetImg = library.getImage(fileName);
+	if (targetImg.empty()) {
+		std::cerr << "Error: cannot load target image\n";
+		return;
+	}
+
+	if (!faceSwap.detectFace(userImg, userRect) || !faceSwap.detectFace(targetImg, targetRect)) {
+		std::cerr << "Face detection failed.\n";
+		return;
+	}
+
+	cv::Mat warped = faceSwap.warpFace(userImg, userRect, targetRect, targetImg.size());
+	cv::Mat mask = faceSwap.createMask(targetRect, targetImg.size());
+	result = faceSwap.blendFace(warped, targetImg, mask);
+
+	cv::imshow("Face Swap Result", result);
+	cv::waitKey(0);
+	cv::destroyAllWindows();
+}
+
 
 

@@ -8,7 +8,8 @@ using namespace std;
 
 bool FaceSwap::detectFace(const cv::Mat& img, cv::Rect& faceRect) {
 	// loads the Haar Cascade model
-	static cv::CascadeClassifier faceDetector("haarcascade_frontalface_default.xml");
+	static cv::CascadeClassifier faceDetector;
+	faceDetector.load("C:/Users/sharu/source/repos/gimpsep-team7/CVProject/files/model/haarcascade_frontalface_default.xml");
 
 	if (faceDetector.empty()) {
 		return false;
@@ -57,17 +58,46 @@ cv::Mat FaceSwap::warpFace(const cv::Mat& srcImg, const cv::Rect& srcRect,
 
 cv::Mat FaceSwap::createMask(const cv::Rect& faceRect, const cv::Size& imageSize) {
 	cv::Mat mask = cv::Mat::zeros(imageSize, CV_8UC1);
-	cv::rectangle(mask, faceRect, cv::Scalar(255), cv::FILLED);
-
+	cv::Point center(faceRect.x + faceRect.width / 2, faceRect.y + faceRect.height / 2);
+	cv::Size axes(faceRect.width / 2, faceRect.height / 2);
+	cv::ellipse(mask, center, axes, 0, 0, 360, cv::Scalar(255), cv::FILLED);
 	return mask;
 }
 
-cv::Mat FaceSwap::blendFace(const cv::Mat& warpedFace, const cv::Mat& targetImg, const cv::Mat& mask) {
-	cv::Moments m = cv::moments(mask, true);
-	cv::Point center(cvRound(m.m10 / m.m10), cvRound(m.m01 / m.m00));
-	cv::Mat output;
 
-	cv::seamlessClone(warpedFace, targetImg, mask, center, output, cv::NORMAL_CLONE);
+cv::Mat FaceSwap::blendFace(const cv::Mat& warpedFace, const cv::Mat& targetImg, const cv::Mat& mask) {
+	if (mask.empty() || mask.type() != CV_8UC1) {
+		std::cerr << "Error: Invalid mask format." << std::endl;
+		return targetImg.clone();
+	}
+
+	cv::Moments m = cv::moments(mask, true);
+	if (m.m00 == 0) {
+		std::cerr << "Error: Mask area is zero." << std::endl;
+		return targetImg.clone();
+	}
+
+	cv::Point center(m.m10 / m.m00, m.m01 / m.m00);
+
+	if (center.x < 0 || center.y < 0 || center.x >= targetImg.cols || center.y >= targetImg.rows) {
+		std::cerr << "Error: Center point is out of bounds: " << center << std::endl;
+		return targetImg.clone();
+	}
+
+	std::cout << "warpedFace size: " << warpedFace.size() << std::endl;
+	std::cout << "targetImg size: " << targetImg.size() << std::endl;
+	std::cout << "mask size: " << mask.size() << std::endl;
+	std::cout << "Center: " << center << std::endl;
+
+	cv::Mat output;
+	try {
+		cv::seamlessClone(warpedFace, targetImg, mask, center, output, cv::NORMAL_CLONE);
+	}
+	catch (const cv::Exception& e) {
+		std::cerr << "cv::seamlessClone failed:" << e.what() << std::endl;
+			return targetImg.clone();
+	}
 
 	return output;
 }
+
