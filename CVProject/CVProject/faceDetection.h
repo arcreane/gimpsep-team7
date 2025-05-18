@@ -21,7 +21,7 @@ public:
 	cv::Mat detectFaces();
 	bool selectFilter();
 	void overlayImage(cv::Point pos);
-	void applyFilterEyes();
+	void applyFilterEyes(int yOffset = 0);
 	void applyFilterSmile(double scale = 1, int yOffset = 0);
 	void applyFilter();
 };
