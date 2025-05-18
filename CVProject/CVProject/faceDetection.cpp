@@ -1,0 +1,243 @@
+#include "faceDetection.h"
+#include <iostream>
+
+void faceDetection::setImage(cv::Mat& image)
+{
+	this->image = image.clone();
+}
+
+cv::Mat const faceDetection::getFilter()
+{
+	return this->filter;
+}
+
+cv::Mat const faceDetection::getImage()
+{
+	return this->image;
+}
+
+std::vector<cv::Rect> faceDetection::getFaces()
+{
+	return this->faces;
+}
+
+std::vector<cv::Rect> faceDetection::getEyes()
+{
+	return this->eyes;
+}
+
+std::vector<cv::Rect> faceDetection::getSmiles()
+{
+	return this->smiles;
+}
+
+cv::Mat faceDetection::detectFaces()
+{
+	cv::CascadeClassifier eyesCascade;
+	cv::CascadeClassifier smileCascade;
+	cv::CascadeClassifier faceCascade;
+	eyesCascade.load("../models/haarcascade_eye.xml");
+	smileCascade.load("../models/haarcascade_smile.xml");
+	faceCascade.load("../models/haarcascade_frontalface_default.xml");
+	cv::Mat image_gray;
+	cv::Mat image_copy = this->image.clone();
+	cv::cvtColor(image_copy, image_gray, cv::COLOR_BGR2GRAY);
+	equalizeHist(image_gray, image_gray);
+	faceCascade.detectMultiScale(image_gray, this->faces);
+
+
+	for (const auto& face : this->faces) {
+		cv::rectangle(image_copy, face, cv::Scalar(255, 0, 0), 2);
+	}
+
+	//For each face detects their eyes and smiles so it just detects them in faces.
+	for (const auto& face : this->faces) {
+		std::vector<cv::Rect> eyes_aux;
+		cv::Mat faceRegion = image_gray(face);
+		eyesCascade.detectMultiScale(faceRegion, eyes_aux);
+
+		for (const auto& eye : eyes_aux) {
+			this->eyes.push_back(eye);
+			cv::Point center(face.x + eye.x + eye.width / 2, face.y + eye.y + eye.height / 2);
+			int radius = cvRound((eye.width + eye.height) * 0.25);
+			cv::circle(image_copy, center, radius, cv::Scalar(0, 255, 0), 2);
+		}
+	}
+
+	for (const auto& face : this->faces) {
+		std::vector<cv::Rect> smiles_aux;
+		cv::Mat faceRegion = image_gray(face);
+		smileCascade.detectMultiScale(faceRegion, smiles_aux);
+
+		for (const auto& smile : smiles_aux) {
+			if (smile.y > face.height * 0.6) {
+				this->smiles.push_back(smile);
+				cv::Point center(face.x + smile.x + smile.width / 2, face.y + smile.y + smile.height / 2);
+				int radius = cvRound((smile.width + smile.height) * 0.25);
+				cv::circle(image_copy, center, radius, cv::Scalar(0, 0, 255), 2);
+			}
+		}
+
+
+	}
+	return image_copy;
+}
+
+void faceDetection::overlayImage(cv::Point pos)
+{
+	for (int y = 0; y < this->filter.rows; ++y) {
+		int fy = y + pos.y;
+		if (fy < 0 || fy >= this->image.rows) {
+			continue;
+		}
+
+		for (int x = 0; x < this->filter.cols; ++x) {
+			int fx = x + pos.x;
+			if (fx < 0 || fx >= this->image.cols) {
+				continue;
+			}
+
+			cv::Vec4b pixFilter = this->filter.at<cv::Vec4b>(y, x);
+			cv::Vec3b& pixImage = this->image.at<cv::Vec3b>(fy, fx);
+
+			float alpha = pixFilter[3] / 255.0f;
+			for (int c = 0; c < 3; ++c) {
+				pixImage[c] = static_cast<uchar>(pixFilter[c] * alpha + pixImage[c] * (1.0f - alpha));
+			}
+		}
+	}
+
+}
+
+void faceDetection::applyFilterEyes()
+{	
+	cv::Rect eye1 = this->eyes[0];
+	cv::Rect eye2 = this->eyes[1];
+	cv::Rect face = this->faces[0];
+	double aspectRatio = this->filter.cols / (double)this->filter.rows;
+	int newfilterWidth = (eye2.x + eye2.width - eye1.x) * 1.5;
+	int newfilterHeight = static_cast<int>(newfilterWidth / aspectRatio);
+	cv::resize(this->filter, this->filter, cv::Size(newfilterWidth, newfilterHeight));
+
+	int eyeCenterY0 = eye1.y + eye1.height / 2;
+	int eyeCenterY1 = eye2.y + eye2.height / 2;
+
+	int centerX = face.x + (eye1.x + eye1.width / 2 + eye2.x + eye2.width / 2) / 2;
+	int centerY = face.y + (eyeCenterY0 + eyeCenterY1) / 2;
+	int filterX = centerX - this->filter.cols / 2;
+	int filterY = centerY - this->filter.rows / 2;
+
+	overlayImage(cv::Point(filterX, filterY));
+}
+
+void faceDetection::applyFilterSmile(double scale, int yOffset)
+{
+	cv::Rect smile = this->smiles[0];
+	cv::Rect face = this->faces[0];
+	double aspectRatio = this->filter.cols / (double)this->filter.rows;
+	int newfilterWidth = smile.width * scale;
+	int newfilterHeight = static_cast<int>(newfilterWidth / aspectRatio);
+	cv::resize(this->filter, this->filter, cv::Size(newfilterWidth, newfilterHeight));
+
+	int centerX = face.x + smile.x + smile.width / 2;
+	int centerY = face.y + smile.y + smile.height / 2;
+	int filterX = centerX - this->filter.cols / 2;
+	int filterY = centerY - this->filter.rows / 2;
+	filterY += yOffset;
+	overlayImage(cv::Point(filterX, filterY));
+}
+
+bool faceDetection::selectFilter()
+{
+	int input;
+	std::cout << "Select filters to apply to face/s" << std::endl;
+	std::cout << "0. Exit" << std::endl;
+	std::cout << "1. Pixelated Sunglasses" << std::endl;
+	std::cout << "2. Pink Sunglasses" << std::endl;
+	std::cout << "3. Small moustache" << std::endl;
+	std::cout << "4. Big moustache" << std::endl;
+	std::cout << "5. Dog tongue" << std::endl;
+
+	std::cin >> input;
+	switch (input)
+	{
+	case 0:
+		std::cout << "Exiting face detection and filters." << std::endl;
+		return true;
+		break;
+	case 1:
+		this->filter_id = input;
+		this->filter = cv::imread("../img/pixelated_sunglasses.png", cv::IMREAD_UNCHANGED);
+		if (this->filter.empty()) {
+			std::cerr << "Error loading filter image" << std::endl;
+			input = -1;
+		}
+		break;
+	case 2:
+		this->filter_id = input;
+		this->filter = cv::imread("../img/pink_sunglasses.png", cv::IMREAD_UNCHANGED);
+		if (this->filter.empty()) {
+			std::cerr << "Error loading filter image" << std::endl;
+			input = -1;
+		}
+		break;
+	case 3:
+	case 4:
+		this->filter_id = input;
+		this->filter = cv::imread("../img/moustache.png", cv::IMREAD_UNCHANGED);
+		if (this->filter.empty()) {
+			std::cerr << "Error loading filter image" << std::endl;
+			input = -1;
+		}
+		break;
+	case 5:
+		this->filter_id = input;
+		this->filter = cv::imread("../img/dog.png", cv::IMREAD_UNCHANGED);
+		if (this->filter.empty()) {
+			std::cerr << "Error loading filter image" << std::endl;
+			input = -1;
+		}
+		break;
+	default:
+		break;
+	}
+	this->filter_id = input;
+	return false;
+}
+
+void faceDetection::applyFilter() {
+	switch (this->filter_id)
+	{
+	case 1:
+	case 2:
+		if (this->eyes.size() < 2) {
+			std::cerr << "Not enough eyes detected" << std::endl;
+			return;
+		}
+		applyFilterEyes();
+		break;
+	case 3:
+		if (this->smiles.empty()) {
+			std::cerr << "No smile detected" << std::endl;
+			return;
+		}
+		applyFilterSmile(0.75, -10);
+		break;
+	case 4:
+		if (this->smiles.empty()) {
+			std::cerr << "No smile detected" << std::endl;
+			return;
+		}
+		applyFilterSmile(1.5);
+		break;
+	case 5:
+		if (this->smiles.empty()) {
+			std::cerr << "No smile detected" << std::endl;
+			return;
+		}
+		applyFilterSmile(1, 50);
+		break;
+	default:
+		std::cerr << "No valid filter selected";
+	}
+}

@@ -28,11 +28,11 @@ public:
 	void dilationImage();
 
 	void cannyEdgeDetection();
+	void faceDetectionAndFilters();
 
 	void stitchImages(const vector<Mat>& images);
 
 	void showImage();
-	void saveImage();
 	cv::Mat getImage();
 };
 

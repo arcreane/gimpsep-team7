@@ -1,5 +1,6 @@
 #include "image.h"
 #include <opencv2/stitching.hpp>
+#include "faceDetection.h"
 
 using namespace std;
 using namespace cv;
@@ -34,30 +35,6 @@ void Image::showImage() {
 
 cv::Mat Image::getImage() {
 	return image;
-}
-
-void Image::saveImage() {
-	std::string input;
-
-	//Displays the image
-	cv::namedWindow("Image");
-	cv::imshow("Image", image);
-	cv::waitKey(0);
-	std::cout << "Do you want to save the image? [Y/N]" << std::endl;
-	std::cin >> input;
-	if (input == "Y") {
-		std::cout << "Type the name of the new image (with extension)" << std::endl;
-		std::cin >> input;
-		cv::imwrite("../img/" + input, image);
-	}
-	else if (input == "N") {
-		std::cout << "Going to main menu" << std::endl;
-	}
-	else {
-		std::cout << "Unexpected input, going to main menu" << std::endl;
-	}
-
-	cv::destroyAllWindows();
 }
 
 void Image::resizeImage() {
@@ -135,7 +112,7 @@ void Image::resizeImage() {
 				cv::resize(image, copyImage, cv::Size(), safeSize, safeSize);
 
 			}
-			//Displaying edit image in real time and waiting for input
+			//Displaying edit image in real time and waiting for input_int
 			cv::imshow("New Image", copyImage);
 			key = cv::waitKey(30);
 			std::cout << key << std::endl;
@@ -464,7 +441,7 @@ void Image::stitchImages(const vector<Mat>& images) {
 
 	namedWindow("Panorama", WINDOW_NORMAL);
 	imshow("Panorama", pano);
-	waitKey(0);
+	cv::waitKey(0);
 	destroyAllWindows();
 
 	string save;
@@ -480,4 +457,38 @@ void Image::stitchImages(const vector<Mat>& images) {
 		imwrite("../img/" + fileName, pano);
 		cout << "Image saved to ../img/" + fileName  << "\n\n" << endl;
 	}
+}
+
+void Image::faceDetectionAndFilters() {
+	faceDetection fD; //Separated class to keep code clean
+	bool exitProgram = false;
+
+	fD.setImage(this->image); //First load the image in the class
+	cv::Mat facesDetected = fD.detectFaces(); //Detect face in the image
+	cv::imshow("Face Detection", facesDetected);
+	cv::waitKey(0);
+	//Checks if the window was closed manually, if not, it closes itself
+	if (cv::getWindowProperty("Face Detection", cv::WND_PROP_VISIBLE) >= 1) {
+		cv::destroyWindow("Face Detection");
+	}
+
+	while (!exitProgram) {
+		fD.setImage(this->image); //Update the image after every loop to apply the changes.
+		exitProgram = fD.selectFilter(); //Method returns true if the user selected to exit the program
+		if (!exitProgram){
+			fD.applyFilter();
+			imshow("Filtered Image", fD.getImage());
+			cv::waitKey(0);
+			if (cv::getWindowProperty("Filtered Image", cv::WND_PROP_VISIBLE) >= 1) {
+				cv::destroyWindow("Filtered Image");
+			}
+			std::string input;
+			std::cout << "Do you want to apply the filter? [Y/N]" << std::endl;
+			std::cin >> input;
+			if (input == "Y") {
+				this->image = fD.getImage();
+			}
+		} else break;
+	}
+	cv::destroyAllWindows();
 }
