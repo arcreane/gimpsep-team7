@@ -485,6 +485,41 @@ void Image::stitchImages(const vector<Mat>& images) {
 	}
 }
 
+void Image::faceDetectionAndFilters() {
+	faceDetection fD; //Separated class to keep code clean
+	bool exitProgram = false;
+
+	fD.setImage(this->image); //First load the image in the class
+	cv::Mat facesDetected = fD.detectFaces(); //Detect face in the image
+	cv::imshow("Face Detection", facesDetected);
+	cv::waitKey(0);
+	//Checks if the window was closed manually, if not, it closes itself
+	if (cv::getWindowProperty("Face Detection", cv::WND_PROP_VISIBLE) >= 1) {
+		cv::destroyWindow("Face Detection");
+	}
+
+	while (!exitProgram) {
+		fD.setImage(this->image); //Update the image after every loop to apply the changes.
+		exitProgram = fD.selectFilter(); //Method returns true if the user selected to exit the program
+		if (!exitProgram){
+			fD.applyFilter();
+			imshow("Filtered Image", fD.getImage());
+			cv::waitKey(0);
+			if (cv::getWindowProperty("Filtered Image", cv::WND_PROP_VISIBLE) >= 1) {
+				cv::destroyWindow("Filtered Image");
+			}
+			std::string input;
+			std::cout << "Do you want to apply the filter? [Y/N]" << std::endl;
+			std::cin >> input;
+			if (input == "Y") {
+				this->image = fD.getImage();
+			}
+		} else break;
+	}
+	cv::destroyAllWindows();
+}
+
+
 
 
 void Image::neuralMosaic() {
