@@ -495,7 +495,6 @@ void Image::faceDetectionAndFilters() {
 	}
 	cv::destroyAllWindows();
 }
-}
 
 
 
