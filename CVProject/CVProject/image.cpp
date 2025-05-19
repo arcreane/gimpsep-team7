@@ -1,5 +1,6 @@
 #include "image.h"
 #include <opencv2/stitching.hpp>
+#include "faceDetection.h"
 
 #include "neural_mosaic.h"
 
@@ -37,30 +38,6 @@ void Image::showImage() {
 
 cv::Mat Image::getImage() {
 	return image;
-}
-
-void Image::saveImage() {
-	std::string input;
-
-	//Displays the image
-	cv::namedWindow("Image");
-	cv::imshow("Image", image);
-	cv::waitKey(0);
-	std::cout << "Do you want to save the image? [Y/N]" << std::endl;
-	std::cin >> input;
-	if (input == "Y") {
-		std::cout << "Type the name of the new image (with extension)" << std::endl;
-		std::cin >> input;
-		cv::imwrite("../img/" + input, image);
-	}
-	else if (input == "N") {
-		std::cout << "Going to main menu" << std::endl;
-	}
-	else {
-		std::cout << "Unexpected input, going to main menu" << std::endl;
-	}
-
-	cv::destroyAllWindows();
 }
 
 void Image::resizeImage() {
@@ -138,7 +115,7 @@ void Image::resizeImage() {
 				cv::resize(image, copyImage, cv::Size(), safeSize, safeSize);
 
 			}
-			//Displaying edit image in real time and waiting for input
+			//Displaying edit image in real time and waiting for input_int
 			cv::imshow("New Image", copyImage);
 			key = cv::waitKey(30);
 			std::cout << key << std::endl;
@@ -467,7 +444,7 @@ void Image::stitchImages(const vector<Mat>& images) {
 
 	namedWindow("Panorama", WINDOW_NORMAL);
 	imshow("Panorama", pano);
-	waitKey(0);
+	cv::waitKey(0);
 	destroyAllWindows();
 
 	string save;
@@ -518,7 +495,7 @@ void Image::faceDetectionAndFilters() {
 	}
 	cv::destroyAllWindows();
 }
-
+}
 
 
 

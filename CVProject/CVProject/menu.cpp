@@ -75,8 +75,7 @@ void Menu::showMenuForImage(Image *image) { //This function displays operations 
 		std::cout << "   7: Dilation" << std::endl;
 		std::cout << "   8: Canny edge detection" << std::endl;
 		std::cout << "   9: Neural Mosaic" << std::endl;
-
-
+		std::cout << "   10: Face detection and filters" << std::endl;
 		std::cin >> operation;
 
 		switch (operation)
@@ -125,6 +124,12 @@ void Menu::showMenuForImage(Image *image) { //This function displays operations 
 		case 9:
 			std::cout << "Chosen: Neural Mosaic" << std::endl;
 			image->neuralMosaic();
+			break;
+		case 10:
+			std::cout << "Chosen: Face detection and filters" << std::endl;
+			image->faceDetectionAndFilters();
+			break;
+		default:
 			break;
 		}
 
@@ -221,6 +226,7 @@ void Menu::runMenu() {
 			std::cout << "Please type the file name" << std::endl;
 			std::cin >> fileName;
 			libImage = library.getImage(fileName); //library reads the image
+			if (libImage.empty()) break;
 			image = Image(libImage);
 			showMenuForImage(&image);
 			break;
