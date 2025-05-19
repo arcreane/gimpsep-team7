@@ -36,6 +36,9 @@
     <ClCompile Include="magicPainter.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
+    <ClCompile Include="neural_mosaic.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
     <ClCompile Include="faceDetection.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
@@ -51,6 +54,9 @@
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="magicPainter.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="neural_mosaic.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="faceDetection.h">
