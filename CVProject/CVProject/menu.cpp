@@ -74,6 +74,9 @@ void Menu::showMenuForImage(Image *image) { //This function displays operations 
 		std::cout << "   6: Lighten/Darken" << std::endl;
 		std::cout << "   7: Dilation" << std::endl;
 		std::cout << "   8: Canny edge detection" << std::endl;
+		std::cout << "   9: Neural Mosaic" << std::endl;
+
+
 		std::cin >> operation;
 
 		switch (operation)
@@ -118,6 +121,10 @@ void Menu::showMenuForImage(Image *image) { //This function displays operations 
 		case 8:
 			std::cout << "Chosen: Canny edge detection" << std::endl;
 			image->cannyEdgeDetection();
+			break;
+		case 9:
+			std::cout << "Chosen: Neural Mosaic" << std::endl;
+			image->neuralMosaic();
 			break;
 		}
 
