@@ -2,55 +2,51 @@
 #include "image.h"
 #include "library.h"
 #include "magicPainter.h"
+#include <qapplication.h>
+
+#include <QApplication>
+#include <QWidget>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QMessageBox>
+#include <qfiledialog.h>
 
 using namespace std;
 using namespace cv;
 
 void Menu::showMenuForMultipleImages(std::vector<Image> images) { //This function displays operations for a set of images
-	int operation;
-	Library library;
-	bool exitProgram = false;
-	while (true) {
-		std::cout << "Welcome to the Image Editor" << std::endl;
-		std::cout << "Please type number of desired operation" << std::endl;
-		std::cout << "   0: exit" << std::endl;
-		std::cout << "   1: show images" << std::endl;
-		std::cout << "   2: Stitching" << std::endl;
+	QWidget* window = new QWidget;
+	window->setWindowTitle("Multiple Images Menu");
 
-		std::cin >> operation;
+	QVBoxLayout* layout = new QVBoxLayout(window);
+	QPushButton* btnShowImages = new QPushButton("Show Images");
+	QPushButton* btnStitch = new QPushButton("Stitch Images");
+	QPushButton* btnExit = new QPushButton("Back to Main Menu");
 
-		switch (operation)
-		{
-		case 0:
-			exitProgram = true;
-			break;
-		case 1:
-			for (int i = 0; i < images.size(); i++)
-			{
-				images.at(i).showImage();
-			}
-			break;
-		case 2:
-			//TODO stitching function here
-			cout << "Stitching images." << endl;
-			vector<Mat> imageMats;
+	layout->addWidget(btnShowImages);
+	layout->addWidget(btnStitch);
+	layout->addWidget(btnExit);
 
-			for (Image& img : images) {
-				imageMats.push_back(img.getImage());
-			}
+	QObject::connect(btnShowImages, &QPushButton::clicked, [=]() {
+		for (Image img : images) {
+			img.showImage(); // reuses OpenCV's imshow
+		}
+		});
 
-
-			Image panoImage;
-			panoImage.stitchImages(imageMats);
-			break;
+	QObject::connect(btnStitch, &QPushButton::clicked, [=]() {
+		std::vector<cv::Mat> imageMats;
+		for ( Image img : images) {
+			imageMats.push_back(img.getImage());
 		}
 
-		cv::destroyAllWindows();
+		Image result;
+		result.stitchImages(imageMats); // your existing method
+		});
 
-		if (exitProgram) {
-			break;
-		}
-	}
+	QObject::connect(btnExit, &QPushButton::clicked, window, &QWidget::close);
+
+	window->setLayout(layout);
+	window->show(); // if QDialog; or show() if QWidget
 
 	}
 
@@ -181,82 +177,68 @@ void Menu::showMenuCamera() {
 }
 
 void Menu::runMenu() {
-	std::string fileName;
-	Library library;
+	QWidget* menuWindow = new QWidget;
+	menuWindow->setWindowTitle("Image Editor - Main Menu");
 
+	QVBoxLayout* layout = new QVBoxLayout(menuWindow);
 
-	while (true) {
-		int typeOfFile; //0 == image, 1 == video, 2==exit
-		int operation;
-		bool exitProgram = false;
-		int numberOfImages;
-		cv::Mat libImage;
-		Image image;
+	QPushButton* btnOneImage = new QPushButton("One Image");
+	QPushButton* btnMultipleImages = new QPushButton("Multiple Images");
+	QPushButton* btnMagicPainter = new QPushButton("Magic Painter");
+	QPushButton* btnExit = new QPushButton("Exit");
 
-		std::vector<std::string> imagesNames;
-		std::vector<Image> images;
+	layout->addWidget(btnOneImage);
+	layout->addWidget(btnMultipleImages);
+	layout->addWidget(btnMagicPainter);
+	layout->addWidget(btnExit);
 
-		std::cout << "Welcome to the Image Editor" << std::endl;
-		std::cout << "Please select what you will work with" << std::endl;
-		std::cout << "   0: exit" << std::endl;
-		std::cout << "   1: One Image" << std::endl;
-		std::cout << "   2: Multiple Images" << std::endl;
-		std::cout << "   3: One Video" << std::endl;
-		std::cout << "   4: Magic Painter" << std::endl;
+	QObject::connect(btnOneImage, &QPushButton::clicked, [=]() {
+		QString fileName = QFileDialog::getOpenFileName(menuWindow, "Select an Image");
+		if (!fileName.isEmpty()) {
+			Library library;
+			std::string filePath = fileName.toUtf8().constData();
+			cv::Mat img = library.getImage(filePath);
+			Image image(img);
+			showMenuForImage(&image); // TODO change to UI
+		}
+		});
 
-		std::cin >> operation;
-		switch (operation)
-		{
-		case 0:
-			exitProgram = true;
-			break;
-		case 1:
-			std::cout << "Please type the file name" << std::endl;
-			std::cin >> fileName;
-			libImage = library.getImage(fileName); //library reads the image
-			image = Image(libImage);
-			showMenuForImage(&image);
-			break;
-
-		case 2: {
-			std::cout << "Please enter number of images" << std::endl;
-			std::cin >> numberOfImages;
-			for (int i = 0; i < numberOfImages; i++) {
-				std::cout << "Please file name of image" << i + 1 << std::endl;
-				std::cin >> fileName;
-				imagesNames.push_back(fileName);
+	QObject::connect(btnMultipleImages, &QPushButton::clicked, [=]() {
+		QStringList fileNames = QFileDialog::getOpenFileNames(menuWindow, "Select Multiple Images");
+		if (!fileNames.isEmpty()) {
+			Library library;
+			std::vector<std::string> names;
+			for (const QString& fileName : fileNames) {
+				std::string filePath = fileName.toUtf8().constData();
+				names.push_back(filePath);
 			}
 
-			images = library.getImages(imagesNames);
+			std::vector<Image> images = library.getImages(names);
 
 			bool hasEmpty = false;
 			for (size_t i = 0; i < images.size(); ++i) {
 				if (images[i].getImage().empty()) {
-					std::cout << "Warning: Image " << imagesNames[i] << " could not be loaded or is empty." << std::endl;
+					QMessageBox::warning(menuWindow, "Error", QString("Image %1 could not be loaded.").arg(fileNames[i]));
 					hasEmpty = true;
 				}
 			}
-			if (hasEmpty) {
-				std::cout << "Cannot continue with empty images. Please check filenames." << std::endl;
-				break;
+			if (!hasEmpty) {
+				menuWindow->hide();  // hide main menu
+				showMenuForMultipleImages(images); // launch sub-menu
+				menuWindow->show();  // resume when sub-menu closes
 			}
-
-			showMenuForMultipleImages(images);
-			break;
 		}
-		case 3:
-			//showMenuForVideoCapture();
-			break;
-		case 4:
-			showMenuCamera();
-			break;
-		}
+		});
 
+	QObject::connect(btnMagicPainter, &QPushButton::clicked, [=]() {
+		showMenuCamera(); // reuse existing logic
+		});
 
-		if (exitProgram) {
-			break;
-		}
-	}
+	QObject::connect(btnExit, &QPushButton::clicked, [=]() {
+		menuWindow->close();
+		});
+
+	menuWindow->show();
 }
 
 

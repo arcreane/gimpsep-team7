@@ -1,7 +1,25 @@
 #include "library.h"
 #include "image.h"
+
+#include "filesystem"
 cv::Mat Library::getImage(std::string name) { //Gets an image
-    cv::Mat image = cv::imread("../img/"+name);
+    //cv::Mat image = cv::imread("../img/"+name);
+    //cv::Mat image = cv::imread(name);
+    namespace fs = std::filesystem;
+
+    std::string pathToLoad;
+
+    if (fs::path(name).is_absolute() || fs::exists(name)) {
+        // Absolute path or exists in given relative location
+        pathToLoad = name;
+    }
+    else {
+        // Fallback to default relative folder
+        pathToLoad = "../img/" + name;
+    }
+
+    cv::Mat image = cv::imread(pathToLoad);
+
     return image;
 }
 std::vector<Image> Library::getImages(std::vector<std::string> names) //Gets a vector of images
