@@ -39,6 +39,9 @@
     <ClCompile Include="neural_mosaic.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
+    <ClCompile Include="faceDetection.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="image.h">
@@ -54,6 +57,9 @@
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="neural_mosaic.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="faceDetection.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>
