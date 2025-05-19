@@ -6,7 +6,7 @@
 // this is a onstructor: loads Haar cascade classifier and opens default camera
 Background::Background() {
 
-    string path = "../models/haarcascade_frontalface_default.xml";
+    std::string path = "../models/haarcascade_frontalface_default.xml";
 
 
     // the face detection model loading
