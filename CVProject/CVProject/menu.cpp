@@ -176,30 +176,22 @@ void Menu::showMenuCamera() {
 }
 
 void Menu::runMenu() {
-	std::string fileName;
-	Library library;
+	QWidget* menuWindow = new QWidget;
+	menuWindow->setWindowTitle("Image Editor - Main Menu");
 
+	QVBoxLayout* layout = new QVBoxLayout(menuWindow);
 
-	while (true) {
-		int typeOfFile; //0 == image, 1 == video, 2==exit
-		int operation;
-		bool exitProgram = false;
-		int numberOfImages;
-		cv::Mat libImage;
-		Image image;
+	QPushButton* btnOneImage = new QPushButton("One Image");
+	QPushButton* btnMultipleImages = new QPushButton("Multiple Images");
+	QPushButton* btnMagicPainter = new QPushButton("Magic Painter");
+	QPushButton* btnExit = new QPushButton("Exit");
 
-		std::vector<std::string> imagesNames;
-		std::vector<Image> images;
+	layout->addWidget(btnOneImage);
+	layout->addWidget(btnMultipleImages);
+	layout->addWidget(btnMagicPainter);
+	layout->addWidget(btnExit);
 
-		std::cout << "Welcome to the Image Editor" << std::endl;
-		std::cout << "Please select what you will work with" << std::endl;
-		std::cout << "   0: exit" << std::endl;
-		std::cout << "   1: One Image" << std::endl;
-		std::cout << "   2: Multiple Images" << std::endl;
-		std::cout << "   3: One Video" << std::endl;
-		std::cout << "   4: Magic Painter" << std::endl;
-
-	QObject::connect(btnOneImage, &QPushButton::clicked, [=]() {
+		QObject::connect(btnOneImage, &QPushButton::clicked, [=]() {
 		QString fileName = QFileDialog::getOpenFileName(menuWindow, "Select an Image"); //Prompts user to search for the image
 		if (!fileName.isEmpty()) {
 			Library library;
@@ -207,48 +199,47 @@ void Menu::runMenu() {
 			cv::Mat img = library.getImage(filePath);
 			Image image(img);
 			showMenuForImage(&image); // TODO change to UI
+
 		}
 		});
 
-		case 2: {
-			std::cout << "Please enter number of images" << std::endl;
-			std::cin >> numberOfImages;
-			for (int i = 0; i < numberOfImages; i++) {
-				std::cout << "Please file name of image" << i + 1 << std::endl;
-				std::cin >> fileName;
-				imagesNames.push_back(fileName);
+		QObject::connect(btnMultipleImages, &QPushButton::clicked, [=]() {
+		QStringList fileNames = QFileDialog::getOpenFileNames(menuWindow, "Select Multiple Images"); //Prompts for the user to select multiple images
+		if (!fileNames.isEmpty()) {
+			Library library;
+			std::vector<std::string> names;
+			for (const QString& fileName : fileNames) {
+				std::string filePath = fileName.toUtf8().constData();
+				names.push_back(filePath);
+	
 			}
 
-			images = library.getImages(imagesNames);
+			std::vector<Image> images = library.getImages(names);
 
 			bool hasEmpty = false;
 			for (size_t i = 0; i < images.size(); ++i) {
 				if (images[i].getImage().empty()) {
-					std::cout << "Warning: Image " << imagesNames[i] << " could not be loaded or is empty." << std::endl;
+					QMessageBox::warning(menuWindow, "Error", QString("Image %1 could not be loaded.").arg(fileNames[i]));
 					hasEmpty = true;
 				}
 			}
-			if (hasEmpty) {
-				std::cout << "Cannot continue with empty images. Please check filenames." << std::endl;
-				break;
+			if (!hasEmpty) {
+				menuWindow->hide();  // hide main menu
+				showMenuForMultipleImages(images, menuWindow); // launch sub-menu
+				menuWindow->show();  // resume when sub-menu closes
 			}
-
-			showMenuForMultipleImages(images);
-			break;
 		}
-		case 3:
-			//showMenuForVideoCapture();
-			break;
-		case 4:
-			showMenuCamera();
-			break;
-		}
+		});
 
+	QObject::connect(btnMagicPainter, &QPushButton::clicked, [=]() {
+		showMenuCamera(); // reuse existing logic
+		});
 
-		if (exitProgram) {
-			break;
-		}
-	}
+	QObject::connect(btnExit, &QPushButton::clicked, [=]() {
+		menuWindow->close();
+		});
+
+	menuWindow->show();
 }
 
 
