@@ -4,19 +4,16 @@
 #include "magicPainter.h"
 #include <qapplication.h>
 
-#include <QApplication>
-#include <QWidget>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QMessageBox>
+
 #include <qfiledialog.h>
 
 using namespace std;
 using namespace cv;
 
-void Menu::showMenuForMultipleImages(std::vector<Image> images) { //This function displays operations for a set of images
-	QWidget* window = new QWidget;
+void Menu::showMenuForMultipleImages(std::vector<Image> images, QWidget *menuWindow) { //This function displays operations for a set of images
+	QDialog* window = new QDialog(menuWindow);
 	window->setWindowTitle("Multiple Images Menu");
+	window->setModal(true);
 
 	QVBoxLayout* layout = new QVBoxLayout(window);
 	QPushButton* btnShowImages = new QPushButton("Show Images");
@@ -46,7 +43,7 @@ void Menu::showMenuForMultipleImages(std::vector<Image> images) { //This functio
 	QObject::connect(btnExit, &QPushButton::clicked, window, &QWidget::close);
 
 	window->setLayout(layout);
-	window->show(); // if QDialog; or show() if QWidget
+	window->exec(); // if QDialog; or show() if QWidget
 
 	}
 
@@ -193,7 +190,7 @@ void Menu::runMenu() {
 	layout->addWidget(btnExit);
 
 	QObject::connect(btnOneImage, &QPushButton::clicked, [=]() {
-		QString fileName = QFileDialog::getOpenFileName(menuWindow, "Select an Image");
+		QString fileName = QFileDialog::getOpenFileName(menuWindow, "Select an Image"); //Prompts user to search for the image
 		if (!fileName.isEmpty()) {
 			Library library;
 			std::string filePath = fileName.toUtf8().constData();
@@ -204,7 +201,7 @@ void Menu::runMenu() {
 		});
 
 	QObject::connect(btnMultipleImages, &QPushButton::clicked, [=]() {
-		QStringList fileNames = QFileDialog::getOpenFileNames(menuWindow, "Select Multiple Images");
+		QStringList fileNames = QFileDialog::getOpenFileNames(menuWindow, "Select Multiple Images"); //Prompts for the user to select multiple images
 		if (!fileNames.isEmpty()) {
 			Library library;
 			std::vector<std::string> names;
@@ -224,7 +221,7 @@ void Menu::runMenu() {
 			}
 			if (!hasEmpty) {
 				menuWindow->hide();  // hide main menu
-				showMenuForMultipleImages(images); // launch sub-menu
+				showMenuForMultipleImages(images,menuWindow); // launch sub-menu
 				menuWindow->show();  // resume when sub-menu closes
 			}
 		}

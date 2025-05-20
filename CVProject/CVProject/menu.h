@@ -7,6 +7,12 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include <iostream>
+
+#include <QApplication>
+#include <QWidget>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QMessageBox>
 #include "image.h"
 
 class Menu
@@ -16,7 +22,7 @@ public:
 	void runMenu();												//running the menu
 	void showMenuForImage(Image* image);						//menu for operations for 1 image
 	void showMenuCamera();										//camera operations
-	void showMenuForMultipleImages(std::vector<Image> images);	//Operations with multiple images
+	void showMenuForMultipleImages(std::vector<Image> images, QWidget* menuWindow);	//Operations with multiple images
 };
 
 
