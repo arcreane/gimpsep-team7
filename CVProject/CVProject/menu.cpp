@@ -114,6 +114,17 @@ void Menu::showMenuForImage(Image *image) { //This function displays operations 
 			std::cout << "Chosen: Canny edge detection" << std::endl;
 			image->cannyEdgeDetection();
 			break;
+		case 9:
+			std::cout << "Chosen: Neural Mosaic" << std::endl;
+			image->neuralMosaic();
+			break;
+		case 10:
+			std::cout << "Chosen: Face detection and filters" << std::endl;
+			image->faceDetectionAndFilters();
+			break;
+		default:
+			break;
+		
 		}
 
 		cv::destroyAllWindows();
