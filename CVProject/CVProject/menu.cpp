@@ -2,6 +2,7 @@
 #include "image.h"
 #include "library.h"
 #include "magicPainter.h"
+#include "background.h"
 
 using namespace std;
 using namespace cv;
@@ -31,7 +32,6 @@ void Menu::showMenuForMultipleImages(std::vector<Image> images) { //This functio
 			}
 			break;
 		case 2:
-			//TODO stitching function here
 			cout << "Stitching images." << endl;
 			vector<Mat> imageMats;
 
@@ -65,9 +65,9 @@ void Menu::showMenuForImage(Image *image) { //This function displays operations 
 	while (true) {
 		std::cout << "Welcome to the Image Editor" << std::endl;
 		std::cout << "Please type number of desired operation" << std::endl;
-		std::cout << "   0: exit" << std::endl;
-		std::cout << "   1: show image" << std::endl;
-		std::cout << "   2: read New Image" << std::endl;
+		std::cout << "   0: Exit" << std::endl;
+		std::cout << "   1: Show image" << std::endl;
+		std::cout << "   2: Read New Image" << std::endl;
 		std::cout << "   3: Save Image" << std::endl;
 		std::cout << "   4: Erosion" << std::endl;
 		std::cout << "   5: Resizing" << std::endl;
@@ -215,6 +215,7 @@ void Menu::runMenu() {
 		std::cout << "   2: Multiple Images" << std::endl;
 		std::cout << "   3: One Video" << std::endl;
 		std::cout << "   4: Magic Painter" << std::endl;
+		std::cout << "   5: Change background" << std::endl;
 
 		std::cin >> operation;
 		switch (operation)
@@ -262,6 +263,12 @@ void Menu::runMenu() {
 			break;
 		case 4:
 			showMenuCamera();
+			break;
+		case 5:
+			Background back;
+			if (back.loadBackground()) {
+				back.run();
+			}
 			break;
 		}
 

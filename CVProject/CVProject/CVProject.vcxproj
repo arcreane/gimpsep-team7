@@ -104,13 +104,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(OPENCV)/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENCV)/include;$(QT_DIR)/include;$(QT_DIR)/include/QtWidgets;$(QT_DIR)/include/QtCore;$(QT_DIR)/include/QtGui</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OPENCV_LIB)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);opencv_world4110d.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OPENCV_LIB);$(QT_DIR)/lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);opencv_world4110d.lib;Qt6Widgets.lib;Qt6Core.lib;Qt6Gui.lib;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -132,6 +134,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="background.cpp" />
     <ClCompile Include="faceDetection.cpp" />
     <ClCompile Include="image.cpp" />
     <ClCompile Include="library.cpp" />
@@ -143,6 +146,7 @@
     <ClCompile Include="resize.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="background.h" />
     <ClInclude Include="faceDetection.h" />
     <ClInclude Include="image.h" />
     <ClInclude Include="library.h" />
