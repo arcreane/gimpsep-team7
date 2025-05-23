@@ -106,7 +106,7 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 		if (!fileName.isEmpty()) {
 			Library library;
 			std::string filePath = fileName.toUtf8().constData();
-			cv::imwrite(filePath, image->getImage());
+			library.saveImage(image->getImage(), filePath);
 		}
 		});
 
