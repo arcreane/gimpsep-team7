@@ -112,7 +112,7 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 
 	QObject::connect(btnErosion, &QPushButton::clicked, [=]() {
 		window->setEnabled(false);
-		image->erosionImage();
+		image->erosionImage(window);
 		window->setEnabled(true);
 		});
 
@@ -130,7 +130,7 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 
 	QObject::connect(btnDilation, &QPushButton::clicked, [=]() {
 		window->setEnabled(false);
-		image->dilationImage();
+		image->dilationImage(window);
 		window->setEnabled(true);
 		});
 
@@ -142,7 +142,7 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 
 	QObject::connect(btnNMosaic, &QPushButton::clicked, [=]() {
 		window->setEnabled(false);
-		image->neuralMosaic();
+		image->neuralMosaic(window);
 		window->setEnabled(true);
 		});
 
