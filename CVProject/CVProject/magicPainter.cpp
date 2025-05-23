@@ -2,6 +2,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/core.hpp>
 
 cv::Point MagicPainter::getContourPoint(cv::Mat mask, cv::Mat img) {
 	std::vector<std::vector<cv::Point>> contours;
@@ -50,18 +51,34 @@ void MagicPainter::addColour() {
 
 
 
-	cv::namedWindow("Trackbars"); //Sets parameters for the mask
+	cv::namedWindow("Trackbars" ); //Sets parameters for the mask
 	cv::createTrackbar("Hue Min", "Trackbars", &hmin, 179);
-	cv::createTrackbar("Hue Max", "Trackbars", &hmin, 179);
+	cv::createTrackbar("Hue Max", "Trackbars", &hmax, 179);
 	cv::createTrackbar("Sat Min", "Trackbars", &smin, 255);
 	cv::createTrackbar("Sat Max", "Trackbars", &smax, 255);
 	cv::createTrackbar("Val Min", "Trackbars", &vmin, 255);
 	cv::createTrackbar("Val Max", "Trackbars", &vmax, 255);
+	cv::resizeWindow("Trackbars", cv::Size(400, 400));
 
-	cv::namedWindow("Trackbars Color"); //Sets parameters for the colour that it will paint
+	cv::namedWindow("Trackbars Color", cv::WINDOW_NORMAL); //Sets parameters for the colour that it will paint
 	cv::createTrackbar("Red", "Trackbars Color", &red, 255);
 	cv::createTrackbar("Green", "Trackbars Color", &green, 255);
 	cv::createTrackbar("Blue", "Trackbars Color", &blue, 255);
+	cv::resizeWindow("Trackbars Color", cv::Size(400, 400));
+
+	cv::namedWindow("Mask", cv::WINDOW_NORMAL); 
+	cv::namedWindow("Image", cv::WINDOW_NORMAL); 
+	cv::namedWindow("Color", cv::WINDOW_NORMAL); 
+
+	cv::moveWindow("Mask", 100, 100);
+	cv::moveWindow("Image", 450, 100);
+	cv::moveWindow("Color", 100, 500);
+
+
+	cv::moveWindow("Trackbars", 1200, 100);
+	cv::moveWindow("Trackbars Color", 1200, 400);
+
+
 
 	while (true) {
 		cv::Scalar lower(hmin, smin, vmin);
@@ -73,9 +90,9 @@ void MagicPainter::addColour() {
 		cv::Mat colorImg(600, 600, CV_8UC3 , cv::Scalar(blue, green, red));
 
 		imshow("Image", img);
-		imshow("Image HSV", imgHSV);
-		imshow("Image Mask", mask);
-		imshow("Color To Paint", colorImg);
+		//imshow("Image HSV", imgHSV);
+		imshow("Mask", mask);
+		imshow("Color", colorImg);
 
 		key = cv::waitKey(27);
 		if (key == "c") {
@@ -87,6 +104,8 @@ void MagicPainter::addColour() {
 	colorValue = cv::Scalar(blue,green,red);
 	colorMasks.push_back(colorMask);
 	colorValues.push_back(colorValue);
+
+	cv::destroyAllWindows();
 
 }
 
