@@ -450,7 +450,7 @@ void Image::cannyEdgeDetection(QDialog* window)
 		if (!fileName.isEmpty()) {
 			Library library;
 			std::string filePath = fileName.toUtf8().constData();
-			cv::imwrite(filePath, processedImage);
+			library.saveImage(processedImage, filePath);
 		}
 		save->close();
 		});
