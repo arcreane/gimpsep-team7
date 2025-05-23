@@ -2,6 +2,11 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
+#include <QDialog>
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QLabel>
+#include <QFileDialog>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include <iostream>
@@ -27,8 +32,8 @@ public:
 	void erosionImage();  // GUI-based erosion function
 	void dilationImage();
 
-	void cannyEdgeDetection();
-	void faceDetectionAndFilters();
+	void cannyEdgeDetection(QDialog* window);
+	void faceDetectionAndFilters(QDialog* window);
 
 	void stitchImages(const vector<Mat>& images);
 

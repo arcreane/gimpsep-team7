@@ -48,13 +48,122 @@ void Menu::showMenuForMultipleImages(std::vector<Image> images, QWidget *menuWin
 	}
 
 
-void Menu::showMenuForImage(Image *image) { //This function displays operations for a single image
-	int typeOfFile; //0 == image, 1 == video, 2==exit
+void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function displays operations for a single image
+	
+	QDialog* window = new QDialog(menuWindow);
+	window->setWindowTitle("One Image Menu");
+	window->setModal(true);
+
+	QVBoxLayout* layout = new QVBoxLayout(window);
+	QLabel* label = new QLabel("Select an option");
+	QPushButton* btnShow = new QPushButton("Show Image");
+	QPushButton* btnReadNew = new QPushButton("Read New Image");
+	QPushButton* btnSave = new QPushButton("Save Image");
+	QPushButton* btnErosion = new QPushButton("Erosion");
+	QPushButton* btnResize = new QPushButton("Resizing");
+	QPushButton* btnLight = new QPushButton("Lighten/Darken");
+	QPushButton* btnDilation = new QPushButton("Dilation");
+	QPushButton* btnCEdge = new QPushButton("Canny Edge Detection");
+	QPushButton* btnNMosaic = new QPushButton("Neural Mosaic");
+	QPushButton* btnFilters = new QPushButton("Face Detection and Filters");
+	QPushButton* btnExit = new QPushButton("Back to Main Menu");
+
+	layout->addWidget(label, 0, Qt::AlignCenter);
+	layout->addWidget(btnShow);
+	layout->addWidget(btnReadNew);
+	layout->addWidget(btnSave);
+	layout->addWidget(btnErosion);
+	layout->addWidget(btnResize);
+	layout->addWidget(btnLight);
+	layout->addWidget(btnDilation);
+	layout->addWidget(btnCEdge);
+	layout->addWidget(btnNMosaic);
+	layout->addWidget(btnFilters);
+	layout->addWidget(btnExit);
+
+	QObject::connect(btnShow, &QPushButton::clicked, [=]() {
+			image->showImage();
+		});
+
+	QObject::connect(btnReadNew, &QPushButton::clicked, [=]() {
+		QString fileName = QFileDialog::getOpenFileName(window, "Select a new Image"); //Prompts user to search for the image
+		if (!fileName.isEmpty()) {
+			Library library;
+			std::string filePath = fileName.toUtf8().constData();
+			cv::Mat newImage = library.getImage(filePath);
+			if (newImage.empty()) {
+				QMessageBox::warning(window, "Error", QString("Image %1 could not be loaded.").arg(fileName));
+			}
+			else {
+				*image = Image(newImage);
+			}
+
+		}
+		});
+
+	QObject::connect(btnSave, &QPushButton::clicked, [=]() {
+		QString fileName = QFileDialog::getSaveFileName(window, "Save the Image");
+		if (!fileName.isEmpty()) {
+			Library library;
+			std::string filePath = fileName.toUtf8().constData();
+			cv::imwrite(filePath, image->getImage());
+		}
+		});
+
+	QObject::connect(btnErosion, &QPushButton::clicked, [=]() {
+		window->setEnabled(false);
+		image->erosionImage();
+		window->setEnabled(true);
+		});
+
+	QObject::connect(btnResize, &QPushButton::clicked, [=]() {
+		window->setEnabled(false);
+		image->resizeImage();
+		window->setEnabled(true);
+		});
+
+	QObject::connect(btnLight, &QPushButton::clicked, [=]() {
+		window->setEnabled(false);
+		image->brightnessImage();
+		window->setEnabled(true);
+		});
+
+	QObject::connect(btnDilation, &QPushButton::clicked, [=]() {
+		window->setEnabled(false);
+		image->dilationImage();
+		window->setEnabled(true);
+		});
+
+	QObject::connect(btnCEdge, &QPushButton::clicked, [=]() {
+		window->setEnabled(false);
+		image->cannyEdgeDetection(window);
+		window->setEnabled(true);
+		});
+
+	QObject::connect(btnNMosaic, &QPushButton::clicked, [=]() {
+		window->setEnabled(false);
+		image->neuralMosaic();
+		window->setEnabled(true);
+		});
+
+	QObject::connect(btnFilters, &QPushButton::clicked, [=]() {
+		window->setEnabled(false);
+		image->faceDetectionAndFilters(window);
+		window->setEnabled(true);
+		});
+
+	QObject::connect(btnExit, &QPushButton::clicked, window, &QWidget::close);
+
+	window->setLayout(layout);
+	window->exec();
+	
+	// if QDialog; or show() if QWidget
+	/*
 	int operation;
-	cv::Mat newImage;
-	std::string fileName;
 	Library library;
+	std::string fileName;
 	bool exitProgram = false;
+	cv::Mat newImage;
 	while (true) {
 		std::cout << "Welcome to the Image Editor" << std::endl;
 		std::cout << "Please type number of desired operation" << std::endl;
@@ -133,6 +242,7 @@ void Menu::showMenuForImage(Image *image) { //This function displays operations 
 			break;
 		}
 	}
+	*/
 }
 
 void Menu::showMenuCamera() {
@@ -187,6 +297,8 @@ void Menu::showMenuCamera() {
 }
 
 void Menu::runMenu() {
+	cv::Mat img;
+	Image image;
 	QWidget* menuWindow = new QWidget;
 	menuWindow->setWindowTitle("Image Editor - Main Menu");
 
@@ -209,8 +321,14 @@ void Menu::runMenu() {
 			std::string filePath = fileName.toUtf8().constData();
 			cv::Mat img = library.getImage(filePath);
 			Image image(img);
-			showMenuForImage(&image); // TODO change to UI
-
+			if (!img.empty()) {
+				menuWindow->hide(); // hide main menu
+				showMenuForImage(&image, menuWindow); // TODO change to UI
+				menuWindow->show(); // resume when sub-menu closes
+			}
+			else {
+				QMessageBox::warning(menuWindow, "Error", QString("Image %1 could not be loaded.").arg(fileName));
+			}
 		}
 		});
 
@@ -243,7 +361,9 @@ void Menu::runMenu() {
 		});
 
 	QObject::connect(btnMagicPainter, &QPushButton::clicked, [=]() {
+		menuWindow->hide(); // hide main menu
 		showMenuCamera(); // reuse existing logic
+		menuWindow->show(); // resume when sub-menu closes
 		});
 
 	QObject::connect(btnExit, &QPushButton::clicked, [=]() {

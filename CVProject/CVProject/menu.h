@@ -20,7 +20,7 @@ class Menu
 private:
 public:
 	void runMenu();												//running the menu
-	void showMenuForImage(Image* image);						//menu for operations for 1 image
+	void showMenuForImage(Image* image, QWidget* menuWindow);						//menu for operations for 1 image
 	void showMenuCamera();										//camera operations
 	void showMenuForMultipleImages(std::vector<Image> images, QWidget* menuWindow);	//Operations with multiple images
 };

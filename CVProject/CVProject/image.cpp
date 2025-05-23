@@ -1,4 +1,5 @@
 #include "image.h"
+#include "library.h"
 #include <opencv2/stitching.hpp>
 #include "faceDetection.h"
 
@@ -367,13 +368,13 @@ void onHighThresholdChange(int, void*) {
 	cannyTrackbarCallbackActive = true;
 }
 
-void Image::cannyEdgeDetection()
-{
-	cv::Mat originalImage = image;
+void Image::cannyEdgeDetection(QDialog* window)
+{	
+	cv::Mat originalImage = this->image.clone();
 	cv::Mat processedImage;
-	std::string input;
 	int kernelSize = 3;
 	int key = -1;
+
 	// windows creation
 	cv::namedWindow("Original Image", cv::WINDOW_AUTOSIZE);
 	cv::namedWindow("Canny Edged Image", cv::WINDOW_AUTOSIZE);
@@ -383,6 +384,24 @@ void Image::cannyEdgeDetection()
 	cv::createTrackbar("High Threshold", "Canny Edge Trackbars", &cannyHighThreshold, 255, onHighThresholdChange);
 	cv::createTrackbar("Kernel Size", "Canny Edge Trackbars", &kernelSize, 7);
 	cv::imshow("Original Image", originalImage);
+	
+	//Help dialog
+	QDialog* pressC = new QDialog(window);
+	pressC->setWindowTitle("How to confirm");
+	pressC->setModal(true);
+	pressC->setAttribute(Qt::WA_DeleteOnClose);
+	QVBoxLayout* layout = new QVBoxLayout(pressC);
+	QLabel* labelc1 = new QLabel("Adjust thresholds until desired edges visualization");
+	QLabel* labelc2 = new QLabel("Press [C] to confirm when you're finished (Close this window to continue)");
+	QPushButton* btnClose = new QPushButton("Close");
+	layout->addWidget(labelc1);
+	layout->addWidget(labelc2);
+	layout->addWidget(btnClose);
+	pressC->setLayout(layout);
+	QObject::connect(btnClose, &QPushButton::clicked, [=]() {
+		pressC->close();
+		});
+	pressC->exec();
 	while (true) {
 		int safeLowThreshold = std::max(1, cannyLowThreshold);
 		int safeHighThreshold = std::max(1, cannyHighThreshold);
@@ -402,25 +421,44 @@ void Image::cannyEdgeDetection()
 		key = cv::waitKey(30);
 		if (key == 'c') break;
 	}
+	cv::destroyAllWindows();
 
-	//save edge detection
-	std::cout << "Do you want to save the changes? [Y/N]" << std::endl;
-	std::cin >> input;
-	//Since this new image is just an edge detection, we're not going to overwrite the original image by default
-	//Instead, we're going to ask the user if they want to save it in other file or overwrite if they want
-	if (input == "Y") {
-		std::cout << "Do you want to overwrite the image with the canny detection one? [Y/N]" << std::endl;
-		std::cin >> input;
-		if (input == "Y") {
-			image = processedImage; 
+	//Save image dialog
+	QDialog* save = new QDialog(window);
+	save->setWindowTitle("Save Image");
+	save->setModal(true);
+	save->setAttribute(Qt::WA_DeleteOnClose);
+	QHBoxLayout* layoutH = new QHBoxLayout();
+	QVBoxLayout* layoutV = new QVBoxLayout(save);
+	QLabel* label = new QLabel("Do you want to overwrite the image with the Canny Detection or save it as a new image?");
+	QPushButton* btnOverwrite = new QPushButton("Overwrite");
+	QPushButton* btnSave = new QPushButton("Save as new");
+	QPushButton* btnNotSave = new QPushButton("Don't save");
+	layoutH->addWidget(btnOverwrite);
+	layoutH->addWidget(btnSave);
+	layoutH->addWidget(btnNotSave);
+	layoutV->addWidget(label, 0, Qt::AlignCenter);
+	layoutV->addLayout(layoutH);
+	save->setLayout(layoutV);
+
+	QObject::connect(btnOverwrite, &QPushButton::clicked, [=]() {
+		this->image = processedImage.clone();
+		save->close();
+		});
+	QObject::connect(btnSave, &QPushButton::clicked, [=]() {
+		QString fileName = QFileDialog::getSaveFileName(save, "Save the Image");
+		if (!fileName.isEmpty()) {
+			Library library;
+			std::string filePath = fileName.toUtf8().constData();
+			cv::imwrite(filePath, processedImage);
 		}
-		else if (input == "N") {
-			std::cout << "The image will be saved inside images folder instead." << std::endl;
-			std::cout << "Type the name of the new image(with extension)" << std::endl;
-			std::cin >> input;
-			cv::imwrite("../img/" + input, processedImage);
-		}
-	}
+		save->close();
+		});
+	QObject::connect(btnNotSave, &QPushButton::clicked, [=]() {
+		save->close();
+		});
+	save->exec();
+
 }
 
 
@@ -462,34 +500,72 @@ void Image::stitchImages(const vector<Mat>& images) {
 	}
 }
 
-void Image::faceDetectionAndFilters() {
+void Image::faceDetectionAndFilters(QDialog* window) {
 	faceDetection fD; //Separated class to keep code clean
-	bool exitProgram = false;
+	bool boolDetectOk = true;
 
 	fD.setImage(this->image); //First load the image in the class
 	cv::Mat facesDetected = fD.detectFaces(); //Detect face in the image
 	cv::imshow("Face Detection", facesDetected);
-	cv::waitKey(0);
 	//Checks if the window was closed manually, if not, it closes itself
+	QDialog* detectOk = new QDialog(window);
+	detectOk->setWindowTitle("Detection Validation");
+	detectOk->setModal(true);
+	detectOk->setAttribute(Qt::WA_DeleteOnClose);
+	QHBoxLayout* layoutOkH = new QHBoxLayout();
+	QVBoxLayout* layoutOkV = new QVBoxLayout(detectOk);
+	QLabel* labelOk = new QLabel("Is the detection ok? If not please select other image");
+	QPushButton* btnConfirm = new QPushButton("Confirm");
+	QPushButton* btnBack = new QPushButton("Go Back");
+	layoutOkH->addWidget(btnConfirm);
+	layoutOkH->addWidget(btnBack);
+	layoutOkV->addWidget(labelOk);
+	layoutOkV->addLayout(layoutOkH);
+	detectOk->setLayout(layoutOkV);
+	QObject::connect(btnConfirm, &QPushButton::clicked, [=]() {
+		detectOk->close();
+		});
+	QObject::connect(btnBack, &QPushButton::clicked, [&]() {
+		detectOk->close();
+		boolDetectOk = false;
+		});
+	detectOk->exec();
 	if (cv::getWindowProperty("Face Detection", cv::WND_PROP_VISIBLE) >= 1) {
 		cv::destroyWindow("Face Detection");
 	}
+	if (!boolDetectOk) return;
 
-	while (!exitProgram) {
+	QDialog* save = new QDialog(window);
+	save->setWindowTitle("Save Image");
+	save->setModal(true);
+	QHBoxLayout* layoutH = new QHBoxLayout();
+	QVBoxLayout* layoutV = new QVBoxLayout(save);
+	QLabel* label = new QLabel("Do you want to save the image with filter?");
+	QPushButton* btnYes = new QPushButton("Yes");
+	QPushButton* btnNo = new QPushButton("No");
+	layoutH->addWidget(btnYes);
+	layoutH->addWidget(btnNo);
+	layoutV->addWidget(label);
+	layoutV->addLayout(layoutH);
+	save->setLayout(layoutV);
+
+	QObject::connect(btnYes, &QPushButton::clicked, [&]() {
+		this->image = fD.getImage().clone();
+		save->close();
+		});
+	QObject::connect(btnNo, &QPushButton::clicked, [=]() {
+		save->close();
+		});
+
+	while (fD.getFilterId() != -1) {
 		fD.setImage(this->image); //Update the image after every loop to apply the changes.
-		exitProgram = fD.selectFilter(); //Method returns true if the user selected to exit the program
-		if (!exitProgram){
+		fD.selectFilter(window);
+		if (fD.getFilterId() != -1) { //If the filter is -1, it means user chose to exit the filter selection
 			fD.applyFilter();
 			imshow("Filtered Image", fD.getImage());
-			cv::waitKey(0);
+			save->exec();
 			if (cv::getWindowProperty("Filtered Image", cv::WND_PROP_VISIBLE) >= 1) {
 				cv::destroyWindow("Filtered Image");
-			}
-			std::string input;
-			std::cout << "Do you want to apply the filter? [Y/N]" << std::endl;
-			std::cin >> input;
-			if (input == "Y") {
-				this->image = fD.getImage();
 			}
 		} else break;
 	}
