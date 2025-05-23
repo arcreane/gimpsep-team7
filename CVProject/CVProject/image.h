@@ -26,8 +26,8 @@ private:
 public:
 	Image();
 	Image(cv::Mat image);
-	void resizeImage();
-	void brightnessImage();
+	void resizeImage(QDialog* window);
+	void brightnessImage(QDialog* window);
 
 	void erosionImage();  // GUI-based erosion function
 	void dilationImage();

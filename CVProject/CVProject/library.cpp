@@ -44,7 +44,19 @@ cv::VideoCapture Library::getVideo(std::string name) //Gets a video
 }
 void Library::saveImage(cv::Mat image, std::string fileName) //exports image
 {
-	cv::imwrite(fileName, image);
+    namespace fs = std::filesystem;
+
+    std::string pathToLoad;
+
+    if (fs::path(fileName).is_absolute() || fs::exists(fileName)) {
+        // Absolute path or exists in given relative location
+        pathToLoad = fileName;
+    }
+    else {
+        // Fallback to default relative folder
+        pathToLoad = "../img/" + fileName;
+    }
+    cv::imwrite("../img/" + fileName, image);
 }
 
 void Library::saveVideo(std::string filename, std::vector<cv::Mat> frames, double fps) //exports video

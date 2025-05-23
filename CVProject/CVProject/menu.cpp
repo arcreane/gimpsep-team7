@@ -118,13 +118,13 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 
 	QObject::connect(btnResize, &QPushButton::clicked, [=]() {
 		window->setEnabled(false);
-		image->resizeImage();
+		image->resizeImage(window);
 		window->setEnabled(true);
 		});
 
 	QObject::connect(btnLight, &QPushButton::clicked, [=]() {
 		window->setEnabled(false);
-		image->brightnessImage();
+		image->brightnessImage(window);
 		window->setEnabled(true);
 		});
 
