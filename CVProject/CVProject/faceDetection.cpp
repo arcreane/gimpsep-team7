@@ -6,9 +6,9 @@ void faceDetection::setImage(cv::Mat& image)
 	this->image = image.clone();
 }
 
-cv::Mat const faceDetection::getFilter()
+int const faceDetection::getFilterId()
 {
-	return this->filter;
+	return this->filter_id;
 }
 
 cv::Mat const faceDetection::getImage()
@@ -158,8 +158,92 @@ void faceDetection::applyFilterSmile(double scale, int yOffset)
 	overlayImage(cv::Point(filterX, filterY));
 }
 
-bool faceDetection::selectFilter()
+void faceDetection::selectFilter(QDialog* window)
 {
+	QDialog* filterSel = new QDialog(window);
+	filterSel->setWindowTitle("Filter Selection");
+	filterSel->setModal(true);
+	filterSel->setAttribute(Qt::WA_DeleteOnClose);
+	QVBoxLayout* layout = new QVBoxLayout(window);
+	QPushButton* btnPixelated = new QPushButton("Pixelated Sunglasses");
+	QPushButton* btnPink = new QPushButton("Pink Sunglasses");
+	QPushButton* btnTranparent = new QPushButton("Transparent Sunglasses");
+	QPushButton* btnSmallMoustache = new QPushButton("Small Moustache");
+	QPushButton* btnBigMoustache = new QPushButton("Big Moustache");
+	QPushButton* btnDogTongue = new QPushButton("Dog Tongue");
+	QPushButton* btnExit = new QPushButton("Exit");
+	layout->addWidget(btnPixelated);
+	layout->addWidget(btnPink);
+	layout->addWidget(btnTranparent);
+	layout->addWidget(btnSmallMoustache);
+	layout->addWidget(btnBigMoustache);
+	layout->addWidget(btnDogTongue);
+	layout->addWidget(btnExit);
+	QObject::connect(btnPixelated, &QPushButton::clicked, [=]() {
+		this->filter_id = 1;
+		this->filter = cv::imread("../img/pixelated_sunglassess.png", cv::IMREAD_UNCHANGED);
+		if (this->filter.empty()) {
+			this->filter_id = -1; //Set to -1 to avoid applying the filter
+			layout->replaceWidget(btnPixelated, new QPushButton("Error loading filter image"));
+		}
+		else {
+			filterSel->close();
+		}
+		});
+	QObject::connect(btnPink, &QPushButton::clicked, [=]() {
+		this->filter_id = 2;
+		this->filter = cv::imread("../img/pink_sunglasses.png", cv::IMREAD_UNCHANGED);
+		if (this->filter.empty()) {
+			this->filter_id = -1; //Set to -1 to avoid applying the filter
+			layout->replaceWidget(btnPixelated, new QPushButton("Error loading filter image"));
+		}
+		filterSel->close();
+		});
+	QObject::connect(btnTranparent, &QPushButton::clicked, [=]() {
+		this->filter_id = 3;
+		this->filter = cv::imread("../img/transparent_glasses.png", cv::IMREAD_UNCHANGED);
+		if (this->filter.empty()) {
+			this->filter_id = -1; //Set to -1 to avoid applying the filter
+			layout->replaceWidget(btnPixelated, new QPushButton("Error loading filter image"));
+		}
+		filterSel->close();
+		});
+	QObject::connect(btnSmallMoustache, &QPushButton::clicked, [=]() {
+		this->filter_id = 4;
+		this->filter = cv::imread("../img/moustache.png", cv::IMREAD_UNCHANGED);
+		if (this->filter.empty()) {
+			this->filter_id = -1; //Set to -1 to avoid applying the filter
+			layout->replaceWidget(btnPixelated, new QPushButton("Error loading filter image"));
+		}
+		filterSel->close();
+		});
+	QObject::connect(btnBigMoustache, &QPushButton::clicked, [=]() {
+		this->filter_id = 5;
+		this->filter = cv::imread("../img/moustache.png", cv::IMREAD_UNCHANGED);
+		if (this->filter.empty()) {
+			this->filter_id = -1; //Set to -1 to avoid applying the filter
+			layout->replaceWidget(btnPixelated, new QPushButton("Error loading filter image"));
+		}
+		filterSel->close();
+		});
+	QObject::connect(btnDogTongue, &QPushButton::clicked, [=]() {
+		this->filter_id = 6;
+		this->filter = cv::imread("../img/dog.png", cv::IMREAD_UNCHANGED);
+		if (this->filter.empty()) {
+			this->filter_id = -1; //Set to -1 to avoid applying the filter
+			layout->replaceWidget(btnPixelated, new QPushButton("Error loading filter image"));
+		}
+		filterSel->close();
+		});
+	QObject::connect(btnExit, &QPushButton::clicked, [=]() {
+		this->filter_id = -1;
+		this->filter.release();
+		filterSel->close();
+		});
+	filterSel->setLayout(layout);
+	filterSel->exec(); // if QDialog; or show() if QWidget
+
+	/*
 	int input;
 	std::cout << "Select filters to apply to face/s" << std::endl;
 	std::cout << "0. Exit" << std::endl;
@@ -169,7 +253,7 @@ bool faceDetection::selectFilter()
 	std::cout << "4. Small moustache" << std::endl;
 	std::cout << "5. Big moustache" << std::endl;
 	std::cout << "6. Dog tongue" << std::endl;
-
+	
 	std::cin >> input;
 	switch (input)
 	{
@@ -221,8 +305,7 @@ bool faceDetection::selectFilter()
 	default:
 		break;
 	}
-	this->filter_id = input;
-	return false;
+	*/
 }
 
 void faceDetection::applyFilter() {
