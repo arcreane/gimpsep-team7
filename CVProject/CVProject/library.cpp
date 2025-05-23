@@ -44,7 +44,7 @@ cv::VideoCapture Library::getVideo(std::string name) //Gets a video
 }
 void Library::saveImage(cv::Mat image, std::string fileName) //exports image
 {
-	cv::imwrite("../img/"+fileName, image);
+	cv::imwrite(fileName, image);
 }
 
 void Library::saveVideo(std::string filename, std::vector<cv::Mat> frames, double fps) //exports video
