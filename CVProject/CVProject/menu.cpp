@@ -118,13 +118,13 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 
 	QObject::connect(btnResize, &QPushButton::clicked, [=]() {
 		window->setEnabled(false);
-		image->resizeImage();
+		image->resizeImage(window);
 		window->setEnabled(true);
 		});
 
 	QObject::connect(btnLight, &QPushButton::clicked, [=]() {
 		window->setEnabled(false);
-		image->brightnessImage();
+		image->brightnessImage(window);
 		window->setEnabled(true);
 		});
 
@@ -245,14 +245,88 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 	*/
 }
 
-void Menu::showMenuCamera() {
-	int operation;
+void Menu::showMenuCamera(QWidget* menuWindow) {
+	
+
+
+	QDialog* window = new QDialog(menuWindow);
+	window->setWindowTitle("One Image Menu");
+	window->setModal(true);
+
+	QVBoxLayout* layout = new QVBoxLayout(window);
+	QLabel* label = new QLabel("Select an option");
+	QPushButton* btnAddColour = new QPushButton("Add Colour");
+	QPushButton* btnStartPainting = new QPushButton("Start Painting");
+	QPushButton* btnExit = new QPushButton("Exit");
+
+	layout->addWidget(label,0, Qt::AlignCenter);
+	layout->addWidget(btnAddColour);
+	layout->addWidget(btnStartPainting);
+	layout->addWidget(btnExit);
+
+	//int operation;
 	Library library;
 	MagicPainter magicPainter;
 	cv::Mat paintedImage;
-	std::string fileName;
-	std::string input;
+	//std::string fileName;
+	//std::string input;
 
+
+	QObject::connect(btnAddColour, &QPushButton::clicked, [window, &magicPainter]() { //Capturing by reference instead of by value
+		window->setEnabled(false);
+		magicPainter.addColour();		
+		window->setEnabled(true);
+		});
+
+	QObject::connect(btnStartPainting, &QPushButton::clicked, [window, &magicPainter, &paintedImage, &library]() {
+		window->setEnabled(false);
+		magicPainter.startPainting(paintedImage);
+
+		QDialog* save = new QDialog(window);
+
+		save->setWindowTitle("Save Image");
+		save->setModal(true);
+		save->setAttribute(Qt::WA_DeleteOnClose);
+
+		QHBoxLayout* layoutH = new QHBoxLayout();
+		QVBoxLayout* layoutV = new QVBoxLayout(save);
+		QLabel* label = new QLabel("Do you want save the image?");
+		QPushButton* btnSave = new QPushButton("Save");
+		QPushButton* btnNotSave = new QPushButton("Don't save");
+
+		layoutH->addWidget(btnSave);
+		layoutH->addWidget(btnNotSave);
+		layoutV->addWidget(label, 0, Qt::AlignCenter);
+		layoutV->addLayout(layoutH);
+		save->setLayout(layoutV);
+
+		QObject::connect(btnSave, &QPushButton::clicked, [&library, window, &paintedImage, save]() {
+		QString fileName = QFileDialog::getSaveFileName(save, "Save the Image");
+
+
+		if (!fileName.isEmpty()) {
+			std::string filePath = fileName.toUtf8().constData();
+			library.saveImage(paintedImage.clone(), filePath);
+
+		}
+		save->close();
+		});
+		QObject::connect(btnNotSave, &QPushButton::clicked, [=]() {
+			save->close();
+			});
+
+		save->exec();
+
+		window->setEnabled(true);
+		});
+
+
+	QObject::connect(btnExit, &QPushButton::clicked, window, &QWidget::close);
+
+	window->setLayout(layout);
+	window->exec();
+
+	/* 
 	bool exitProgram = false;
 	while (true) {
 		std::cout << "Welcome to the Image Editor" << std::endl;
@@ -293,6 +367,7 @@ void Menu::showMenuCamera() {
 			break;
 		}
 	}
+	*/
 
 }
 
@@ -362,7 +437,7 @@ void Menu::runMenu() {
 
 	QObject::connect(btnMagicPainter, &QPushButton::clicked, [=]() {
 		menuWindow->hide(); // hide main menu
-		showMenuCamera(); // reuse existing logic
+		showMenuCamera(menuWindow); // reuse existing logic
 		menuWindow->show(); // resume when sub-menu closes
 		});
 
