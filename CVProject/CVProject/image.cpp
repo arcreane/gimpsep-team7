@@ -551,11 +551,18 @@ void Image::cannyEdgeDetection(QDialog* window)
 }
 
 
-void Image::stitchImages(const vector<Mat>& images) {
+void Image::stitchImages(const vector<Image>& images) {
+
+	vector<Mat> imgs;
+	imgs.reserve(images.size());
+	for (const auto& img : images) {
+		imgs.push_back(img.image);
+	}
+
 	Mat pano;
 	Ptr<Stitcher> stitcher = Stitcher::create(Stitcher::PANORAMA);
 
-	Stitcher::Status status = stitcher->stitch(images, pano);
+	Stitcher::Status status = stitcher->stitch(imgs, pano);
 
 	if (status != Stitcher::OK) {
 		cout << "\n\nError during stitching. Error code: " << int(status) << endl;

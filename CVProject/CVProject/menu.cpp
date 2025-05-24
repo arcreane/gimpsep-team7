@@ -31,14 +31,9 @@ void Menu::showMenuForMultipleImages(std::vector<Image> images, QWidget *menuWin
 		});
 
 	QObject::connect(btnStitch, &QPushButton::clicked, [=]() {
-		std::vector<cv::Mat> imageMats;
-		for ( Image img : images) {
-			imageMats.push_back(img.getImage());
-		}
-
-		Image result;
-		result.stitchImages(imageMats); // your existing method
-		});
+		Image pano;
+		pano.stitchImages(images);
+	});
 
 	QObject::connect(btnExit, &QPushButton::clicked, window, &QWidget::close);
 
