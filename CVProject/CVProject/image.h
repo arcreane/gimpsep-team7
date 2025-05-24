@@ -29,15 +29,15 @@ public:
 	void resizeImage();
 	void brightnessImage();
 
-	void erosionImage();  // GUI-based erosion function
-	void dilationImage();
+	void erosionImage(QDialog* window);  // GUI-based erosion function
+	void dilationImage(QDialog* window);
 
 	void cannyEdgeDetection(QDialog* window);
 	void faceDetectionAndFilters(QDialog* window);
 
 	void stitchImages(const vector<Mat>& images);
 
-	void neuralMosaic();
+	void neuralMosaic(QDialog* window);
 
 
 	void showImage();

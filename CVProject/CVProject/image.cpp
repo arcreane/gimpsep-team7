@@ -3,6 +3,14 @@
 #include <opencv2/stitching.hpp>
 #include "faceDetection.h"
 
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QDialog>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QPixmap>
+#include <QImage>
+
 #include "neural_mosaic.h"
 
 
@@ -243,99 +251,180 @@ void Image::brightnessImage() {
 	}
 }
 
-void Image::erosionImage() {
-	// jose g
-	cv::Mat originalImage = image;
+void Image::erosionImage(QDialog* window) {
+	cv::Mat originalImage = this->image.clone();
 	cv::Mat processedImage;
-	std::string input;
 	int erosionSize = 1;
 	int key = -1;
 
-	// windows creation
+	// Create windows
 	cv::namedWindow("Original Image", cv::WINDOW_AUTOSIZE);
 	cv::namedWindow("Eroded Image", cv::WINDOW_AUTOSIZE);
 	cv::namedWindow("Erosion Trackbar", cv::WINDOW_AUTOSIZE);
 
-	// trackbar creation
 	cv::createTrackbar("Erosion Size", "Erosion Trackbar", &erosionSize, 20);
-
 	cv::imshow("Original Image", originalImage);
 
-	std::cout << "Press [C] To CONFIRM " << std::endl;
+	// Help dialog
+	QDialog* pressC = new QDialog(window);
+	pressC->setWindowTitle("How to confirm");
+	pressC->setModal(true);
+	pressC->setAttribute(Qt::WA_DeleteOnClose);
+	QVBoxLayout* layout = new QVBoxLayout(pressC);
+	QLabel* label1 = new QLabel("Adjust erosion size using the trackbar.");
+	QLabel* label2 = new QLabel("Press [C] to confirm when finished (Close this window to continue)");
+	QPushButton* btnClose = new QPushButton("Close");
+	layout->addWidget(label1);
+	layout->addWidget(label2);
+	layout->addWidget(btnClose);
+	pressC->setLayout(layout);
+	QObject::connect(btnClose, &QPushButton::clicked, [=]() {
+		pressC->close();
+	});
+	pressC->exec();
 
+	// Processing loop
 	while (true) {
 		int safeSize = std::max(1, erosionSize);
 
-		// applying erosion
 		cv::Mat element = cv::getStructuringElement(
 			cv::MORPH_RECT,
 			cv::Size(2 * safeSize + 1, 2 * safeSize + 1),
 			cv::Point(safeSize, safeSize)
 		);
 		cv::erode(originalImage, processedImage, element);
-
-		// result
 		cv::imshow("Eroded Image", processedImage);
 
-		//waiting for confirm
 		key = cv::waitKey(30);
 		if (key == 'c') break;
 	}
-
-	// confirm/discard
 	cv::destroyAllWindows();
-	std::cout << "Do you want to confirm changes? [Y/N]" << std::endl;
-	std::cin >> input;
 
-	if (input == "Y") {
-		image = processedImage;  // save in object
-	} else if (input == "N") {
-		image = originalImage;   // restores old image
-	}
+	// Save image dialog
+	QDialog* save = new QDialog(window);
+	save->setWindowTitle("Save Image");
+	save->setModal(true);
+	save->setAttribute(Qt::WA_DeleteOnClose);
+	QHBoxLayout* layoutH = new QHBoxLayout();
+	QVBoxLayout* layoutV = new QVBoxLayout(save);
+	QLabel* label = new QLabel("Do you want to overwrite the image with the erosion result or save it as a new image?");
+	QPushButton* btnOverwrite = new QPushButton("Overwrite");
+	QPushButton* btnSave = new QPushButton("Save as new");
+	QPushButton* btnNotSave = new QPushButton("Don't save");
+	layoutH->addWidget(btnOverwrite);
+	layoutH->addWidget(btnSave);
+	layoutH->addWidget(btnNotSave);
+	layoutV->addWidget(label, 0, Qt::AlignCenter);
+	layoutV->addLayout(layoutH);
+	save->setLayout(layoutV);
+
+	QObject::connect(btnOverwrite, &QPushButton::clicked, [=]() {
+		this->image = processedImage.clone();
+		save->close();
+	});
+	QObject::connect(btnSave, &QPushButton::clicked, [=]() {
+		QString fileName = QFileDialog::getSaveFileName(save, "Save the Image");
+		if (!fileName.isEmpty()) {
+			Library library;
+			std::string filePath = fileName.toUtf8().constData();
+			cv::imwrite(filePath, processedImage);
+		}
+		save->close();
+	});
+	QObject::connect(btnNotSave, &QPushButton::clicked, [=]() {
+		save->close();
+	});
+	save->exec();
 }
 
 
-void Image::dilationImage() {
-	cv::Mat dilatedImage;
-	cv::Mat originalImage = image.clone(); // backup
+
+void Image::dilationImage(QDialog* window) {
+	cv::Mat originalImage = this->image.clone();
+	cv::Mat processedImage;
 	int dilationSize = 1;
 	int key = -1;
-	std::string input;
 
-	// create windows
-	cv::namedWindow("Dilation Trackbar", cv::WINDOW_AUTOSIZE);
+	// Create windows
 	cv::namedWindow("Original Image", cv::WINDOW_AUTOSIZE);
 	cv::namedWindow("Dilated Image", cv::WINDOW_AUTOSIZE);
+	cv::namedWindow("Dilation Trackbar", cv::WINDOW_AUTOSIZE);
 
 	cv::createTrackbar("Dilation Size", "Dilation Trackbar", &dilationSize, 20);
+	cv::imshow("Original Image", originalImage);
 
-	std::cout << "Press [C] To CONFIRM " << std::endl;
+	// Help dialog
+	QDialog* pressC = new QDialog(window);
+	pressC->setWindowTitle("How to confirm");
+	pressC->setModal(true);
+	pressC->setAttribute(Qt::WA_DeleteOnClose);
+	QVBoxLayout* layout = new QVBoxLayout(pressC);
+	QLabel* label1 = new QLabel("Adjust dilation size using the trackbar.");
+	QLabel* label2 = new QLabel("Press [C] to confirm when you're satisfied (Close this window to continue)");
+	QPushButton* btnClose = new QPushButton("Close");
+	layout->addWidget(label1);
+	layout->addWidget(label2);
+	layout->addWidget(btnClose);
+	pressC->setLayout(layout);
+	QObject::connect(btnClose, &QPushButton::clicked, [=]() {
+		pressC->close();
+	});
+	pressC->exec();
 
+	// Processing loop
 	while (true) {
-		int kernelSize = 2 * dilationSize + 1;
-		cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
-													cv::Size(kernelSize, kernelSize));
-		cv::dilate(originalImage, dilatedImage, element);
+		int safeSize = std::max(1, dilationSize);
 
-		cv::imshow("Original Image", originalImage);
-		cv::imshow("Dilated Image", dilatedImage);
+		cv::Mat element = cv::getStructuringElement(
+			cv::MORPH_RECT,
+			cv::Size(2 * safeSize + 1, 2 * safeSize + 1),
+			cv::Point(safeSize, safeSize)
+		);
+		cv::dilate(originalImage, processedImage, element);
+		cv::imshow("Dilated Image", processedImage);
 
 		key = cv::waitKey(30);
-		if (key == 'c') break; // confirm edit
+		if (key == 'c') break;
 	}
-
-	image = dilatedImage; // save the dilated image into the object
 	cv::destroyAllWindows();
 
-	std::cout << "Do you want to confirm changes? [Y/N]" << std::endl;
-	std::cin >> input;
-	if (input == "Y") {
-		image = dilatedImage;  // save in an object
-	} else if (input == "N") {
-		image = originalImage;   // restores old image
-	} // revert the image
+	// Save image dialog
+	QDialog* save = new QDialog(window);
+	save->setWindowTitle("Save Image");
+	save->setModal(true);
+	save->setAttribute(Qt::WA_DeleteOnClose);
+	QHBoxLayout* layoutH = new QHBoxLayout();
+	QVBoxLayout* layoutV = new QVBoxLayout(save);
+	QLabel* label = new QLabel("Do you want to overwrite the image with the dilation result or save it as a new image?");
+	QPushButton* btnOverwrite = new QPushButton("Overwrite");
+	QPushButton* btnSave = new QPushButton("Save as new");
+	QPushButton* btnNotSave = new QPushButton("Don't save");
+	layoutH->addWidget(btnOverwrite);
+	layoutH->addWidget(btnSave);
+	layoutH->addWidget(btnNotSave);
+	layoutV->addWidget(label, 0, Qt::AlignCenter);
+	layoutV->addLayout(layoutH);
+	save->setLayout(layoutV);
 
+	QObject::connect(btnOverwrite, &QPushButton::clicked, [=]() {
+		this->image = processedImage.clone();
+		save->close();
+	});
+	QObject::connect(btnSave, &QPushButton::clicked, [=]() {
+		QString fileName = QFileDialog::getSaveFileName(save, "Save the Image");
+		if (!fileName.isEmpty()) {
+			Library library;
+			std::string filePath = fileName.toUtf8().constData();
+			cv::imwrite(filePath, processedImage);
+		}
+		save->close();
+	});
+	QObject::connect(btnNotSave, &QPushButton::clicked, [=]() {
+		save->close();
+	});
+	save->exec();
 }
+
 
 
 int cannyLowThreshold = 100;
@@ -574,30 +663,130 @@ void Image::faceDetectionAndFilters(QDialog* window) {
 
 
 
-void Image::neuralMosaic() {
-	int rows, cols;
-	std::cout << "Enter number of rows: ";
-	std::cin >> rows;
-	std::cout << "Enter number of columns: ";
-	std::cin >> cols;
-
-	cv::Mat result = applyNeuralMosaic(image, rows, cols);
-
-	cv::imshow("Neural Mosaic Result", result);
-	std::cout << "Press any key to continue..." << std::endl;
-	cv::waitKey(0);
-
-	std::cout << "Do you want to confirm changes? [Y/N]" << std::endl;
-	std::string input;
-	std::cin >> input;
-
-	if (input == "Y" || input == "y") {
-		image = result;
+// Helper to convert cv::Mat to QImage
+QImage matToQImage(const cv::Mat& mat) {
+	if(mat.channels() == 3) {
+		return QImage(mat.data, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_BGR888).copy();
+	} else if(mat.channels() == 1) {
+		return QImage(mat.data, mat.cols, mat.rows, static_cast<int>(mat.step), QImage::Format_Grayscale8).copy();
 	}
-
-	cv::destroyAllWindows();
+	return QImage();
 }
 
+void Image::neuralMosaic(QDialog* window) {
+    bool ok;
+    int rows = QInputDialog::getInt(window, "Neural Mosaic", "Enter number of rows:", 10, 1, 100, 1, &ok);
+    if (!ok) return;
+    int cols = QInputDialog::getInt(window, "Neural Mosaic", "Enter number of columns:", 10, 1, 100, 1, &ok);
+    if (!ok) return;
 
+    std::unique_ptr<cv::Mat> result = std::make_unique<cv::Mat>(applyNeuralMosaic(this->image, rows, cols));
+    if (result->empty()) {
+        QMessageBox::warning(window, "Error", "Resulting image is empty!");
+        return;
+    }
 
+    // Help dialog
+    QDialog* pressC = new QDialog(window);
+    pressC->setWindowTitle("Neural Mosaic Preview");
+    pressC->setModal(true);
+    pressC->setAttribute(Qt::WA_DeleteOnClose);
+    QVBoxLayout* layoutHelp = new QVBoxLayout(pressC);
+    QLabel* help1 = new QLabel("You are previewing the result of Neural Mosaic.");
+    QLabel* help2 = new QLabel("Click 'Confirm' to continue, or 'Cancel' to discard.");
+    QPushButton* btnCloseHelp = new QPushButton("Continue");
+    layoutHelp->addWidget(help1);
+    layoutHelp->addWidget(help2);
+    layoutHelp->addWidget(btnCloseHelp);
+    QObject::connect(btnCloseHelp, &QPushButton::clicked, [=]() {
+        pressC->accept();
+    });
+    pressC->exec();
 
+    // Show preview
+    QDialog previewDialog(window);
+    previewDialog.setWindowTitle("Neural Mosaic Result");
+    previewDialog.setModal(true);
+    QVBoxLayout* vLayout = new QVBoxLayout(&previewDialog);
+    QLabel* label = new QLabel(&previewDialog);
+
+    QImage qimg = matToQImage(*result);
+    if (qimg.isNull()) {
+        QMessageBox::warning(window, "Error", "Unable to display preview image.");
+        return;
+    }
+
+    label->setPixmap(QPixmap::fromImage(qimg));
+    vLayout->addWidget(label);
+
+    QHBoxLayout* btnLayout = new QHBoxLayout();
+    QPushButton* btnConfirm = new QPushButton("Confirm", &previewDialog);
+    QPushButton* btnCancel = new QPushButton("Cancel", &previewDialog);
+    btnLayout->addStretch();
+    btnLayout->addWidget(btnConfirm);
+    btnLayout->addWidget(btnCancel);
+    vLayout->addLayout(btnLayout);
+
+    int dialogResult = -1;
+    QObject::connect(btnConfirm, &QPushButton::clicked, [&]() {
+        dialogResult = 0;
+        previewDialog.accept();
+    });
+    QObject::connect(btnCancel, &QPushButton::clicked, [&]() {
+        dialogResult = 1;
+        previewDialog.reject();
+    });
+
+    if (previewDialog.exec() != QDialog::Accepted || dialogResult != 0) {
+        return;
+    }
+
+    // Save image dialog
+    QDialog saveDialog(window);
+    saveDialog.setWindowTitle("Save Image");
+    saveDialog.setModal(true);
+
+    QVBoxLayout* layoutV = new QVBoxLayout(&saveDialog);
+    QHBoxLayout* layoutH = new QHBoxLayout();
+
+    QLabel* label2 = new QLabel("Do you want to overwrite the image with the Mosaic or save it as a new image?", &saveDialog);
+    QPushButton* btnOverwrite = new QPushButton("Overwrite", &saveDialog);
+    QPushButton* btnSave = new QPushButton("Save as new", &saveDialog);
+    QPushButton* btnNotSave = new QPushButton("Don't save", &saveDialog);
+
+    layoutH->addWidget(btnOverwrite);
+    layoutH->addWidget(btnSave);
+    layoutH->addWidget(btnNotSave);
+    layoutV->addWidget(label2, 0, Qt::AlignCenter);
+    layoutV->addLayout(layoutH);
+
+    bool saveConfirmed = false;
+
+    QObject::connect(btnOverwrite, &QPushButton::clicked, [&]() {
+        this->image = result->clone();
+        saveConfirmed = true;
+        saveDialog.accept();
+    });
+
+    QObject::connect(btnSave, &QPushButton::clicked, [&]() {
+        QString fileName = QFileDialog::getSaveFileName(&saveDialog, "Save the Image");
+        if (!fileName.isEmpty()) {
+            cv::Mat saveResult = *result;
+            if (saveResult.depth() != CV_8U) {
+                double minVal, maxVal;
+                cv::minMaxLoc(saveResult, &minVal, &maxVal);
+                double scale = (maxVal > minVal) ? (255.0 / (maxVal - minVal)) : 1.0;
+                saveResult.convertTo(saveResult, CV_8U, scale, -minVal * scale);
+            }
+            cv::imwrite(fileName.toStdString(), saveResult);
+            saveConfirmed = true;
+        }
+        saveDialog.accept();
+    });
+
+    QObject::connect(btnNotSave, &QPushButton::clicked, [&]() {
+        saveDialog.reject();
+    });
+
+    saveDialog.exec();
+}
