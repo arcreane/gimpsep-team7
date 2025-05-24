@@ -1,4 +1,4 @@
-#include "image.h"
+﻿#include "image.h"
 #include "library.h"
 #include <opencv2/stitching.hpp>
 #include "faceDetection.h"
@@ -552,6 +552,7 @@ void Image::cannyEdgeDetection(QDialog* window)
 
 
 void Image::stitchImages(const vector<Image>& images) {
+//void Image::stitchImages(const vector<Image>& images, QDialog* window) {
 
 	vector<Mat> imgs;
 	imgs.reserve(images.size());
@@ -560,13 +561,14 @@ void Image::stitchImages(const vector<Image>& images) {
 		imgs.push_back(img.image);
 	}
 
+
 	Mat pano;
 	Ptr<Stitcher> stitcher = Stitcher::create(Stitcher::PANORAMA);
 
 	Stitcher::Status status = stitcher->stitch(imgs, pano);
 
 	if (status != Stitcher::OK) {
-		QMessageBox::critical(nullptr, "Error during stitching.", "Try using better images with more texture or overlap.");
+		QMessageBox::critical(nullptr, "Error during stitching.", "Panorama could not be created.\nTry using better images with more texture or overlap.");
 		return;
 	}
 
@@ -574,24 +576,28 @@ void Image::stitchImages(const vector<Image>& images) {
 	width = image.cols;
 	height = image.rows;
 
-	//QMessageBox::information(nullptr, "Success!", "Panorama created successfully");
+	// transfer pano in rgb
+	cv::Mat pano_rgb;
+	cv::cvtColor(pano, pano_rgb, cv::COLOR_BGR2RGB);
 
 	QImage qimg(pano.data, pano.cols, pano.rows, pano.step, QImage::Format_BGR888);
+	QPixmap pixmap = QPixmap::fromImage(qimg.copy()); // a copy
 
 	// show image ina qt dialog
 	QDialog* dialog = new QDialog;
+	//dialog->setWindowTitle("Panorama Result");
+	//dialog->setAttribute(Qt::WA_DeleteOnClose);,
 	dialog->setWindowTitle("Panorama Result");
 
 	QVBoxLayout* layout = new QVBoxLayout(dialog);
 	QLabel* label = new QLabel;
-
-	label->setPixmap(QPixmap::fromImage(qimg).scaled(800, 600, Qt::KeepAspectRatio));
+	label->setPixmap(pixmap.scaled(800, 600, Qt::KeepAspectRatio));
 	layout->addWidget(label);
 
 	dialog->setLayout(layout);
 	dialog->exec();
 
-	delete dialog;
+	//delete dialog;
 
 	// saving
 	QMessageBox::StandardButton reply = QMessageBox::question(
@@ -606,11 +612,37 @@ void Image::stitchImages(const vector<Image>& images) {
 			QLineEdit::Normal, "", &ok
 		);
 
+		//if (ok && !filename.isEmpty()) {
+		//	if (pano.empty()) {
+		//		QMessageBox::critical(nullptr, "Save Error", "Cannot save empty image.");
+		//		return;
+		//	}
+		//	std::string path = "../img/" + filename.toStdString();
+		//	bool success = cv::imwrite(path, pano);
+		//	if (success) {
+		//		QMessageBox::information(nullptr, "Saved", "Image saved to:\n" + filename);
+		//	}
+		//	else {
+		//		QMessageBox::critical(nullptr, "Save Error", "Failed to save image to:\n" + filename);
+		//	}
+		//}
+
 		if (ok && !filename.isEmpty()) {
-			cv::imwrite("../img/" + filename.toStdString(), pano);
-			QMessageBox::information(nullptr, "Saved", "Image saved to ../img/" + filename);
+			QString cleaned = filename.trimmed();
+			std::string path = "../img/" + cleaned.toStdString();
+
+			if (!pano.empty()) {
+				bool success = cv::imwrite(path, pano);
+				if (success) {
+					QMessageBox::information(nullptr, "Saved", "Image saved to:\n" + cleaned);
+				}
+				else {
+					QMessageBox::critical(nullptr, "Save Error", "Failed to save image to:\n" + cleaned);
+				}
+			}
 		}
 	}
+	image = pano;
 }
 
 void Image::faceDetectionAndFilters(QDialog* window) {

@@ -30,9 +30,11 @@ void Menu::showMenuForMultipleImages(std::vector<Image> images, QWidget *menuWin
 		}
 		});
 
-	QObject::connect(btnStitch, &QPushButton::clicked, [=]() {
-		Image pano;
-		pano.stitchImages(images);
+	Image stitch;
+	QObject::connect(btnStitch, &QPushButton::clicked, [window, &stitch, &images]() {
+		window->setEnabled(false);
+		stitch.stitchImages(images);
+		window->setEnabled(true);
 	});
 
 	QObject::connect(btnExit, &QPushButton::clicked, window, &QWidget::close);
