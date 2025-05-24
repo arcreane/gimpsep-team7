@@ -56,7 +56,7 @@ void Library::saveImage(cv::Mat image, std::string fileName) //exports image
         // Fallback to default relative folder
         pathToLoad = "../img/" + fileName;
     }
-    cv::imwrite("../img/" + fileName, image);
+    cv::imwrite(pathToLoad, image);
 }
 
 void Library::saveVideo(std::string filename, std::vector<cv::Mat> frames, double fps) //exports video

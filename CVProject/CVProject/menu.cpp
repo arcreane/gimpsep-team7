@@ -101,7 +101,7 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 		}
 		});
 
-	QObject::connect(btnSave, &QPushButton::clicked, [=]() {
+	QObject::connect(btnSave, &QPushButton::clicked, [image, window]() {
 		QString fileName = QFileDialog::getSaveFileName(window, "Save the Image");
 		if (!fileName.isEmpty()) {
 			Library library;
