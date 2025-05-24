@@ -555,6 +555,7 @@ void Image::stitchImages(const vector<Image>& images) {
 
 	vector<Mat> imgs;
 	imgs.reserve(images.size());
+
 	for (const auto& img : images) {
 		imgs.push_back(img.image);
 	}
@@ -565,8 +566,7 @@ void Image::stitchImages(const vector<Image>& images) {
 	Stitcher::Status status = stitcher->stitch(imgs, pano);
 
 	if (status != Stitcher::OK) {
-		cout << "\n\nError during stitching. Error code: " << int(status) << endl;
-		cout << "Try using better images with more texture or overlap.\n\n" << endl;
+		QMessageBox::critical(nullptr, "Error during stitching.", "Try using better images with more texture or overlap.");
 		return;
 	}
 
@@ -574,25 +574,42 @@ void Image::stitchImages(const vector<Image>& images) {
 	width = image.cols;
 	height = image.rows;
 
-	cout << "Panorama created successfully" << endl;
+	//QMessageBox::information(nullptr, "Success!", "Panorama created successfully");
 
-	namedWindow("Panorama", WINDOW_NORMAL);
-	imshow("Panorama", pano);
-	cv::waitKey(0);
-	destroyAllWindows();
+	QImage qimg(pano.data, pano.cols, pano.rows, pano.step, QImage::Format_BGR888);
 
-	string save;
-	cout << "Do you want to save a panorama?" << endl;
-	cin >> save;
+	// show image ina qt dialog
+	QDialog* dialog = new QDialog;
+	dialog->setWindowTitle("Panorama Result");
 
-	if (save == "y" || save == "Y") {
-		string fileName;
+	QVBoxLayout* layout = new QVBoxLayout(dialog);
+	QLabel* label = new QLabel;
 
-		cout << "Enter filename (with extension): ";
-		cin >> fileName;
+	label->setPixmap(QPixmap::fromImage(qimg).scaled(800, 600, Qt::KeepAspectRatio));
+	layout->addWidget(label);
 
-		imwrite("../img/" + fileName, pano);
-		cout << "Image saved to ../img/" + fileName  << "\n\n" << endl;
+	dialog->setLayout(layout);
+	dialog->exec();
+
+	delete dialog;
+
+	// saving
+	QMessageBox::StandardButton reply = QMessageBox::question(
+		nullptr, "Save Panorama", "Do you want to save the panorama?",
+		QMessageBox::Yes | QMessageBox::No
+	);
+
+	if (reply == QMessageBox::Yes) {
+		bool ok;
+		QString filename = QInputDialog::getText(
+			nullptr, "Save Image", "Enter filename (with extension):",
+			QLineEdit::Normal, "", &ok
+		);
+
+		if (ok && !filename.isEmpty()) {
+			cv::imwrite("../img/" + filename.toStdString(), pano);
+			QMessageBox::information(nullptr, "Saved", "Image saved to ../img/" + filename);
+		}
 	}
 }
 
