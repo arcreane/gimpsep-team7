@@ -53,12 +53,29 @@ void Image::resizeImage(QDialog* window) {
 		cv::Mat copyImage;
 		cv::Mat originalImage;
 		std::string input;
-		std::string textOfWindow1 = "Press [C] to confirm edit";
-		std::string textOfWindow2 = "press[P] to swap between proportional";
-		std::string textOfWindow3 = "resizing and separate resizing";
+
 		bool activateProportionalScaling = false;
 		bool resizingFinished = false;
 		int key = -1;
+
+
+		// Help dialog
+		QDialog* pressC = new QDialog(window);
+		pressC->setWindowTitle("Resizing tutorial");
+		pressC->setModal(true);
+		pressC->setAttribute(Qt::WA_DeleteOnClose);
+		QVBoxLayout* layoutHelp = new QVBoxLayout(pressC);
+		QLabel* help1 = new QLabel("Change from proportional sizing to X/Y sizing with [P].");
+		QLabel* help2 = new QLabel("Press [C] once you have the result that you desire.");
+
+		QPushButton* btnCloseHelp = new QPushButton("Continue");
+		layoutHelp->addWidget(help1);
+		layoutHelp->addWidget(help2);
+		layoutHelp->addWidget(btnCloseHelp);
+		QObject::connect(btnCloseHelp, &QPushButton::clicked, [=]() {
+			pressC->accept();
+			});
+		pressC->exec();
 
 		//creating windows
 		cv::namedWindow("Original Image", cv::WINDOW_AUTOSIZE);
@@ -66,46 +83,17 @@ void Image::resizeImage(QDialog* window) {
 		cv::namedWindow("Trackbar Width", cv::WINDOW_AUTOSIZE);
 		cv::namedWindow("Trackbar Height", cv::WINDOW_AUTOSIZE);
 
-		cv::namedWindow("TextWindow", cv::WINDOW_AUTOSIZE);
 
 		//Adding text
 		cv::Mat imageText = cv::Mat::zeros(400, 600, CV_8UC3);  // blank image for text
-		cv::putText(imageText,
-			textOfWindow1,					//Text
-			cv::Point(50, 70),				//Position
-			cv::FONT_HERSHEY_SIMPLEX,		//Font
-			0.7,							//Font Scale
-			cv::Scalar(255, 255, 255),		//Color (white)
-			2);								//thickness
-		cv::putText(imageText,
-			textOfWindow2,					//Text
-			cv::Point(50, 100),				//Position
-			cv::FONT_HERSHEY_SIMPLEX,		//Font
-			0.7,							//Font Scale
-			cv::Scalar(255, 255, 255),		//Color (white)
-			2);								//thickness
-
-		cv::putText(imageText,
-			textOfWindow3,					//Text
-			cv::Point(50, 130),				//Position
-			cv::FONT_HERSHEY_SIMPLEX,		//Font
-			0.7,							//Font Scale
-			cv::Scalar(255, 255, 255),		//Color (white)
-			2);								//thickness
-
-
-
+		
 		cv::createTrackbar("Width", "Trackbar Width", &width, 4000);
 		cv::createTrackbar("Height", "Trackbar Height", &height, 4000);
 
 
-		//Button that doesn't work
-		//cv::createButton("Confirm Size", onConfirmButton, 0, false);
-
 		copyImage = image;
 		originalImage = image;
 		cv::imshow("Original Image", image);
-		cv::imshow("TextWindow", imageText);
 
 		while (!resizingFinished && !image.empty()) {
 			if (!activateProportionalScaling) {
@@ -210,7 +198,25 @@ void Image::brightnessImage(QDialog* window) {
 		brightness = 1;
 		int key = -1;
 
+		// Help dialog
+		QDialog* pressC = new QDialog(window);
+		pressC->setWindowTitle("Brightness tutorial");
+		pressC->setModal(true);
+		pressC->setAttribute(Qt::WA_DeleteOnClose);
+		QVBoxLayout* layoutHelp = new QVBoxLayout(pressC);
+		QLabel* help1 = new QLabel("First, you will set the range of the brightness trackbar.");
+		QLabel* help2 = new QLabel("Then, you will interact with the trackbar to change the brightness.");
+		QLabel* help3 = new QLabel("Press [C] once you have the result that you desire.");
 
+		QPushButton* btnCloseHelp = new QPushButton("Continue");
+		layoutHelp->addWidget(help1);
+		layoutHelp->addWidget(help2);
+		layoutHelp->addWidget(help3);
+		layoutHelp->addWidget(btnCloseHelp);
+		QObject::connect(btnCloseHelp, &QPushButton::clicked, [=]() {
+			pressC->accept();
+			});
+		pressC->exec();
 
 		brightRange = QInputDialog::getInt(		//input dialog for the brightness range
 			window,                           // Parent widget
@@ -237,7 +243,7 @@ void Image::brightnessImage(QDialog* window) {
 		copyImage = image;
 		originalImage = image;
 
-		std::cout << "Press [C] To CONFIRM " << std::endl;
+
 
 		while (true) {
 			copyImage.convertTo(changedImage, copyImage.type(), 1, brightness);
@@ -429,29 +435,20 @@ void Image::dilationImage(QDialog* window) {
 	QHBoxLayout* layoutH = new QHBoxLayout();
 	QVBoxLayout* layoutV = new QVBoxLayout(save);
 	QLabel* label = new QLabel("Do you want to overwrite the image with the dilation result or save it as a new image?");
-	QPushButton* btnOverwrite = new QPushButton("Overwrite");
-	QPushButton* btnSave = new QPushButton("Save as new");
+	QPushButton* btnSave = new QPushButton("Save");
 	QPushButton* btnNotSave = new QPushButton("Don't save");
-	layoutH->addWidget(btnOverwrite);
+
 	layoutH->addWidget(btnSave);
 	layoutH->addWidget(btnNotSave);
 	layoutV->addWidget(label, 0, Qt::AlignCenter);
 	layoutV->addLayout(layoutH);
 	save->setLayout(layoutV);
 
-	QObject::connect(btnOverwrite, &QPushButton::clicked, [=]() {
+	QObject::connect(btnSave, &QPushButton::clicked, [=]() {
 		this->image = processedImage.clone();
 		save->close();
 	});
-	QObject::connect(btnSave, &QPushButton::clicked, [=]() {
-		QString fileName = QFileDialog::getSaveFileName(save, "Save the Image");
-		if (!fileName.isEmpty()) {
-			Library library;
-			std::string filePath = fileName.toUtf8().constData();
-			cv::imwrite(filePath, processedImage);
-		}
-		save->close();
-	});
+
 	QObject::connect(btnNotSave, &QPushButton::clicked, [=]() {
 		save->close();
 	});
@@ -553,29 +550,19 @@ void Image::cannyEdgeDetection(QDialog* window)
 	QHBoxLayout* layoutH = new QHBoxLayout();
 	QVBoxLayout* layoutV = new QVBoxLayout(save);
 	QLabel* label = new QLabel("Do you want to overwrite the image with the Canny Detection or save it as a new image?");
-	QPushButton* btnOverwrite = new QPushButton("Overwrite");
-	QPushButton* btnSave = new QPushButton("Save as new");
+	QPushButton* btnSave = new QPushButton("Save");
 	QPushButton* btnNotSave = new QPushButton("Don't save");
-	layoutH->addWidget(btnOverwrite);
 	layoutH->addWidget(btnSave);
 	layoutH->addWidget(btnNotSave);
 	layoutV->addWidget(label, 0, Qt::AlignCenter);
 	layoutV->addLayout(layoutH);
 	save->setLayout(layoutV);
 
-	QObject::connect(btnOverwrite, &QPushButton::clicked, [=]() {
+	QObject::connect(btnSave, &QPushButton::clicked, [=]() {
 		this->image = processedImage.clone();
 		save->close();
 		});
-	/*QObject::connect(btnSave, &QPushButton::clicked, [=]() {
-		QString fileName = QFileDialog::getSaveFileName(save, "Save the Image");
-		if (!fileName.isEmpty()) {
-			Library library;
-			std::string filePath = fileName.toUtf8().constData();
-			library.saveImage(processedImage, filePath);
-		}
-		save->close();
-		});*/
+
 	QObject::connect(btnNotSave, &QPushButton::clicked, [=]() {
 		save->close();
 		});
