@@ -157,14 +157,14 @@ void Image::resizeImage(QDialog* window) {
 		cv::destroyAllWindows();
 
 		
-		//Save image dialog
+		//Save changes dialog
 		QDialog* save = new QDialog(window);
-		save->setWindowTitle("Save Image");
+		save->setWindowTitle("Save Changes");
 		save->setModal(true);
 		save->setAttribute(Qt::WA_DeleteOnClose);
 		QHBoxLayout* layoutH = new QHBoxLayout();
 		QVBoxLayout* layoutV = new QVBoxLayout(save);
-		QLabel* label = new QLabel("Do you want to confirm changes?");
+		QLabel* label = new QLabel("Do you want to save changes?");
 		QPushButton* btnSave = new QPushButton("Save");
 		QPushButton* btnNotSave = new QPushButton("Don't save");
 		layoutH->addWidget(btnSave);
@@ -269,7 +269,7 @@ void Image::brightnessImage(QDialog* window) {
 		save->setAttribute(Qt::WA_DeleteOnClose);
 		QHBoxLayout* layoutH = new QHBoxLayout();
 		QVBoxLayout* layoutV = new QVBoxLayout(save);
-		QLabel* label = new QLabel("Do you want to confirm changes?");
+		QLabel* label = new QLabel("Do you want to save changes?");
 		QPushButton* btnSave = new QPushButton("Save");
 		QPushButton* btnNotSave = new QPushButton("Don't save");
 		layoutH->addWidget(btnSave);
@@ -339,35 +339,24 @@ void Image::erosionImage(QDialog* window) {
 	}
 	cv::destroyAllWindows();
 
-	// Save image dialog
+	// Save changes dialog
 	QDialog* save = new QDialog(window);
-	save->setWindowTitle("Save Image");
+	save->setWindowTitle("Save Changes");
 	save->setModal(true);
 	save->setAttribute(Qt::WA_DeleteOnClose);
 	QHBoxLayout* layoutH = new QHBoxLayout();
 	QVBoxLayout* layoutV = new QVBoxLayout(save);
-	QLabel* label = new QLabel("Do you want to overwrite the image with the erosion result or save it as a new image?");
-	QPushButton* btnOverwrite = new QPushButton("Overwrite");
-	QPushButton* btnSave = new QPushButton("Save as new");
+	QLabel* label = new QLabel("Do you want to save changes?");
+	QPushButton* btnSave = new QPushButton("Save");
 	QPushButton* btnNotSave = new QPushButton("Don't save");
-	layoutH->addWidget(btnOverwrite);
 	layoutH->addWidget(btnSave);
 	layoutH->addWidget(btnNotSave);
 	layoutV->addWidget(label, 0, Qt::AlignCenter);
 	layoutV->addLayout(layoutH);
 	save->setLayout(layoutV);
 
-	QObject::connect(btnOverwrite, &QPushButton::clicked, [=]() {
-		this->image = processedImage.clone();
-		save->close();
-	});
 	QObject::connect(btnSave, &QPushButton::clicked, [=]() {
-		QString fileName = QFileDialog::getSaveFileName(save, "Save the Image");
-		if (!fileName.isEmpty()) {
-			Library library;
-			std::string filePath = fileName.toUtf8().constData();
-			cv::imwrite(filePath, processedImage);
-		}
+		this->image = processedImage.clone();
 		save->close();
 	});
 	QObject::connect(btnNotSave, &QPushButton::clicked, [=]() {
@@ -427,9 +416,9 @@ void Image::dilationImage(QDialog* window) {
 	}
 	cv::destroyAllWindows();
 
-	// Save image dialog
+	// Save Changes dialog
 	QDialog* save = new QDialog(window);
-	save->setWindowTitle("Save Image");
+	save->setWindowTitle("Save Changes");
 	save->setModal(true);
 	save->setAttribute(Qt::WA_DeleteOnClose);
 	QHBoxLayout* layoutH = new QHBoxLayout();
@@ -460,11 +449,13 @@ void Image::dilationImage(QDialog* window) {
 int cannyLowThreshold = 100;
 int cannyHighThreshold = 200;
 bool cannyTrackbarCallbackActive = true;
-//These callbacks are used to forbid the user to set a low threshold higher than the high threshold and vice versa
-//How it works is if the user tries to set a low threshold higher than the high threshold, the bar freezes not letting it to go higher
-//The same happens with the high threshold, but in reverse
-//cannyTrackbarCallbackActive is used to avoid crash, since setTrackbarPos moves the bar what triggers the callback again, which makes a recursive loop.
-//With cannyTrackbarCallbackActive set on false, the bar position is just corrected once instead of infinite times.
+/*
+These callbacks are used to forbid the user to set a low threshold higher than the high threshold and vice versa
+How it works is if the user tries to set a low threshold higher than the high threshold, the bar freezes not letting it to go higher
+The same happens with the high threshold, but in reverse
+cannyTrackbarCallbackActive is used to avoid crash, since setTrackbarPos moves the bar what triggers the callback again, which makes a recursive loop.
+With cannyTrackbarCallbackActive set on false, the bar position is just corrected once instead of infinite times.
+*/
 void onLowThresholdChange(int, void*) {
 	if (!cannyTrackbarCallbackActive) return;
 
@@ -549,7 +540,7 @@ void Image::cannyEdgeDetection(QDialog* window)
 	save->setAttribute(Qt::WA_DeleteOnClose);
 	QHBoxLayout* layoutH = new QHBoxLayout();
 	QVBoxLayout* layoutV = new QVBoxLayout(save);
-	QLabel* label = new QLabel("Do you want to save changes of the canny edge detection?");
+	QLabel* label = new QLabel("Do you want to save changes?");
 	QPushButton* btnSave = new QPushButton("Save");
 	QPushButton* btnNotSave = new QPushButton("Don't save");
 	layoutH->addWidget(btnSave);
@@ -712,7 +703,7 @@ void Image::faceDetectionAndFilters(QDialog* window) {
 	detectOk->setAttribute(Qt::WA_DeleteOnClose);
 	QHBoxLayout* layoutOkH = new QHBoxLayout();
 	QVBoxLayout* layoutOkV = new QVBoxLayout(detectOk);
-	QLabel* labelOk = new QLabel("Is the detection ok? If not please select other image");
+	QLabel* labelOk = new QLabel("Make sure detection is ok. If not, press 'Go Back' to change the image");
 	QPushButton* btnConfirm = new QPushButton("Confirm");
 	QPushButton* btnBack = new QPushButton("Go Back");
 	layoutOkH->addWidget(btnConfirm);
@@ -738,20 +729,20 @@ void Image::faceDetectionAndFilters(QDialog* window) {
 	save->setModal(true);
 	QHBoxLayout* layoutH = new QHBoxLayout();
 	QVBoxLayout* layoutV = new QVBoxLayout(save);
-	QLabel* label = new QLabel("Do you want to save the image with filter?");
-	QPushButton* btnYes = new QPushButton("Yes");
-	QPushButton* btnNo = new QPushButton("No");
-	layoutH->addWidget(btnYes);
-	layoutH->addWidget(btnNo);
+	QLabel* label = new QLabel("Do you want to save changes?");
+	QPushButton* btnSave = new QPushButton("Save");
+	QPushButton* btnNotSave = new QPushButton("Don't Save");
+	layoutH->addWidget(btnSave);
+	layoutH->addWidget(btnNotSave);
 	layoutV->addWidget(label);
 	layoutV->addLayout(layoutH);
 	save->setLayout(layoutV);
 
-	QObject::connect(btnYes, &QPushButton::clicked, [&]() {
+	QObject::connect(btnSave, &QPushButton::clicked, [&]() {
 		this->image = fD.getImage().clone();
 		save->close();
 		});
-	QObject::connect(btnNo, &QPushButton::clicked, [=]() {
+	QObject::connect(btnNotSave, &QPushButton::clicked, [=]() {
 		save->close();
 		});
 

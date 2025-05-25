@@ -55,7 +55,7 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 	QLabel* label = new QLabel("Select an option");
 	QPushButton* btnShow = new QPushButton("Show Image");
 	QPushButton* btnReadNew = new QPushButton("Read New Image");
-	QPushButton* btnSave = new QPushButton("Save Image");
+	QPushButton* btnExport = new QPushButton("Export Image");
 	QPushButton* btnErosion = new QPushButton("Erosion");
 	QPushButton* btnResize = new QPushButton("Resizing");
 	QPushButton* btnLight = new QPushButton("Lighten/Darken");
@@ -63,13 +63,12 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 	QPushButton* btnCEdge = new QPushButton("Canny Edge Detection");
 	QPushButton* btnNMosaic = new QPushButton("Neural Mosaic");
 	QPushButton* btnFilters = new QPushButton("Face Detection and Filters");
-	//QPushButton* btnBackground = new QPushButton("Dynamic Background");
 	QPushButton* btnExit = new QPushButton("Back to Main Menu");
 
 	layout->addWidget(label, 0, Qt::AlignCenter);
 	layout->addWidget(btnShow);
 	layout->addWidget(btnReadNew);
-	layout->addWidget(btnSave);
+	layout->addWidget(btnExport);
 	layout->addWidget(btnErosion);
 	layout->addWidget(btnResize);
 	layout->addWidget(btnLight);
@@ -77,7 +76,6 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 	layout->addWidget(btnCEdge);
 	layout->addWidget(btnNMosaic);
 	layout->addWidget(btnFilters);
-	//layout->addWidget(btnBackground);
 	layout->addWidget(btnExit);
 
 	QObject::connect(btnShow, &QPushButton::clicked, [=]() {
@@ -100,8 +98,8 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 		}
 		});
 
-	QObject::connect(btnSave, &QPushButton::clicked, [image, window]() {
-		QString fileName = QFileDialog::getSaveFileName(window, "Save the Image");
+	QObject::connect(btnExport, &QPushButton::clicked, [image, window]() {
+		QString fileName = QFileDialog::getSaveFileName(window, "Export the Image");
 		if (!fileName.isEmpty()) {
 			Library library;
 			std::string filePath = fileName.toUtf8().constData();
@@ -158,91 +156,6 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 	window->exec();
 	
 	// if QDialog; or show() if QWidget
-	/*
-	int operation;
-	Library library;
-	std::string fileName;
-	bool exitProgram = false;
-	cv::Mat newImage;
-	while (true) {
-		std::cout << "Welcome to the Image Editor" << std::endl;
-		std::cout << "Please type number of desired operation" << std::endl;
-		std::cout << "   0: exit" << std::endl;
-		std::cout << "   1: show image" << std::endl;
-		std::cout << "   2: read New Image" << std::endl;
-		std::cout << "   3: Save Image" << std::endl;
-		std::cout << "   4: Erosion" << std::endl;
-		std::cout << "   5: Resizing" << std::endl;
-		std::cout << "   6: Lighten/Darken" << std::endl;
-		std::cout << "   7: Dilation" << std::endl;
-		std::cout << "   8: Canny edge detection" << std::endl;
-		std::cout << "   9: Neural Mosaic" << std::endl;
-		std::cout << "   10: Face detection and filters" << std::endl;
-		std::cin >> operation;
-
-		switch (operation)
-		{
-		case 0:
-			exitProgram = true;
-			break;
-		case 1:
-			image->showImage();
-			break;
-		case 2:
-			std::cout << "Please type the new file to read" << std::endl;
-			std::cin >> fileName;
-			newImage = library.getImage(fileName);
-			*image = Image(newImage);
-			break;
-		case 3:
-			std::cout << "Please type the name of the file with extension" << std::endl;
-			std::cin >> fileName;
-			library.saveImage(image->getImage(), fileName);
-			break;
-		case 4:
-// MISSING DILATION JOSE G
-			std::cout << "Chosen: Erosion" << std::endl;
-			//Method for dilation
-			image->erosionImage();
-			break;
-
-		case 5:
-			std::cout << "Chose: Resizing" << std::endl;
-			image->resizeImage(); 	//Method for Resizing
-			break;
-
-		case 6:
-			std::cout << "Chosen: Lighten/Darken" << std::endl;
-			image->brightnessImage();
-			break;
-		case 7: 
-			std::cout << "Chosen: Dilation" << std::endl;
-			image->dilationImage();
-			break;
-		case 8:
-			std::cout << "Chosen: Canny edge detection" << std::endl;
-			image->cannyEdgeDetection();
-			break;
-		case 9:
-			std::cout << "Chosen: Neural Mosaic" << std::endl;
-			image->neuralMosaic();
-			break;
-		case 10:
-			std::cout << "Chosen: Face detection and filters" << std::endl;
-			image->faceDetectionAndFilters();
-			break;
-		default:
-			break;
-		
-		}
-
-		cv::destroyAllWindows();
-
-		if (exitProgram) {
-			break;
-		}
-	}
-	*/
 }
 
 void Menu::showMenuCamera(QWidget* menuWindow) {
@@ -264,12 +177,9 @@ void Menu::showMenuCamera(QWidget* menuWindow) {
 	layout->addWidget(btnStartPainting);
 	layout->addWidget(btnExit);
 
-	//int operation;
 	Library library;
 	MagicPainter magicPainter;
 	cv::Mat paintedImage;
-	//std::string fileName;
-	//std::string input;
 
 
 	QObject::connect(btnAddColour, &QPushButton::clicked, [window, &magicPainter]() { //Capturing by reference instead of by value
@@ -367,50 +277,6 @@ void Menu::showMenuCamera(QWidget* menuWindow) {
 
 	window->setLayout(layout);
 	window->exec();
-
-	/* 
-	bool exitProgram = false;
-	while (true) {
-		std::cout << "Welcome to the Image Editor" << std::endl;
-		std::cout << "Please type number of desired operation" << std::endl;
-		std::cout << "   0: exit" << std::endl;
-		std::cout << "   1: Detect new color" << std::endl;
-		std::cout << "   2: Start Painting" << std::endl;
-
-		std::cin >> operation;
-
-		switch (operation)
-		{
-		case 0:
-			exitProgram = true;
-			break;
-		case 1:
-			magicPainter.addColour();
-			break;
-		case 2:
-			magicPainter.startPainting(paintedImage);
-			cv::imshow("Image", paintedImage);
-			cv::waitKey(0);
-			std::cout << "Do you want to save the image? [Y/N]" << std::endl;
-			std::cin >> input;
-			if (input == "Y") {
-				std::cout << "Please type the name of the file with extension" << std::endl;
-				std::cin >> fileName;
-				library.saveImage(paintedImage, fileName);
-			}
-			break;
-		
-
-		}
-
-		cv::destroyAllWindows();
-
-		if (exitProgram) {
-			break;
-		}
-	}
-	*/
-
 }
 
 void Menu::runMenu() {
@@ -442,7 +308,7 @@ void Menu::runMenu() {
 			Image image(img);
 			if (!img.empty()) {
 				menuWindow->hide(); // hide main menu
-				showMenuForImage(&image, menuWindow); // TODO change to UI
+				showMenuForImage(&image, menuWindow);
 				menuWindow->show(); // resume when sub-menu closes
 			}
 			else {
