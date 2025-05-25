@@ -85,9 +85,7 @@ void Image::resizeImage(QDialog* window) {
 		cv::namedWindow("Trackbar Height", cv::WINDOW_AUTOSIZE);
 
 
-		//Adding text
-		cv::Mat imageText = cv::Mat::zeros(400, 600, CV_8UC3);  // blank image for text
-		
+		//creating trackbars		
 		cv::createTrackbar("Width", "Trackbar Width", &width, 4000);
 		cv::createTrackbar("Height", "Trackbar Height", &height, 4000);
 
@@ -285,6 +283,7 @@ void Image::brightnessImage(QDialog* window) {
 			save->close();
 			});
 		QObject::connect(btnNotSave, &QPushButton::clicked, [=]() {
+			this->image = originalImage.clone();
 			save->close();
 			});
 		save->exec();
@@ -435,7 +434,7 @@ void Image::dilationImage(QDialog* window) {
 	save->setAttribute(Qt::WA_DeleteOnClose);
 	QHBoxLayout* layoutH = new QHBoxLayout();
 	QVBoxLayout* layoutV = new QVBoxLayout(save);
-	QLabel* label = new QLabel("Do you want to overwrite the image with the dilation result or save it as a new image?");
+	QLabel* label = new QLabel("Do you want to save changes?");
 	QPushButton* btnSave = new QPushButton("Save");
 	QPushButton* btnNotSave = new QPushButton("Don't save");
 
@@ -550,7 +549,7 @@ void Image::cannyEdgeDetection(QDialog* window)
 	save->setAttribute(Qt::WA_DeleteOnClose);
 	QHBoxLayout* layoutH = new QHBoxLayout();
 	QVBoxLayout* layoutV = new QVBoxLayout(save);
-	QLabel* label = new QLabel("Do you want to overwrite the image with the Canny Detection or save it as a new image?");
+	QLabel* label = new QLabel("Do you want to save changes of the canny edge detection?");
 	QPushButton* btnSave = new QPushButton("Save");
 	QPushButton* btnNotSave = new QPushButton("Don't save");
 	layoutH->addWidget(btnSave);
@@ -860,11 +859,10 @@ void Image::neuralMosaic(QDialog* window) {
     QHBoxLayout* layoutH = new QHBoxLayout();
 
     QLabel* label2 = new QLabel("Do you want to overwrite the image with the Mosaic or save it as a new image?", &saveDialog);
-    QPushButton* btnOverwrite = new QPushButton("Overwrite", &saveDialog);
-    QPushButton* btnSave = new QPushButton("Save as new", &saveDialog);
+    QPushButton* btnSave = new QPushButton("Save", &saveDialog);
     QPushButton* btnNotSave = new QPushButton("Don't save", &saveDialog);
 
-    layoutH->addWidget(btnOverwrite);
+  
     layoutH->addWidget(btnSave);
     layoutH->addWidget(btnNotSave);
     layoutV->addWidget(label2, 0, Qt::AlignCenter);
@@ -872,25 +870,9 @@ void Image::neuralMosaic(QDialog* window) {
 
     bool saveConfirmed = false;
 
-    QObject::connect(btnOverwrite, &QPushButton::clicked, [&]() {
+    QObject::connect(btnSave, &QPushButton::clicked, [&]() {
         this->image = result->clone();
         saveConfirmed = true;
-        saveDialog.accept();
-    });
-
-    QObject::connect(btnSave, &QPushButton::clicked, [&]() {
-        QString fileName = QFileDialog::getSaveFileName(&saveDialog, "Save the Image");
-        if (!fileName.isEmpty()) {
-            cv::Mat saveResult = *result;
-            if (saveResult.depth() != CV_8U) {
-                double minVal, maxVal;
-                cv::minMaxLoc(saveResult, &minVal, &maxVal);
-                double scale = (maxVal > minVal) ? (255.0 / (maxVal - minVal)) : 1.0;
-                saveResult.convertTo(saveResult, CV_8U, scale, -minVal * scale);
-            }
-            cv::imwrite(fileName.toStdString(), saveResult);
-            saveConfirmed = true;
-        }
         saveDialog.accept();
     });
 
