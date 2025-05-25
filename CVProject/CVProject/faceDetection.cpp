@@ -181,7 +181,7 @@ void faceDetection::selectFilter(QDialog* window)
 	layout->addWidget(btnExit);
 	QObject::connect(btnPixelated, &QPushButton::clicked, [=]() {
 		this->filter_id = 1;
-		this->filter = cv::imread("../img/pixelated_sunglassess.png", cv::IMREAD_UNCHANGED);
+		this->filter = cv::imread("../img/pixelated_sunglasses.png", cv::IMREAD_UNCHANGED);
 		if (this->filter.empty()) {
 			this->filter_id = -1; //Set to -1 to avoid applying the filter
 			layout->replaceWidget(btnPixelated, new QPushButton("Error loading filter image"));
