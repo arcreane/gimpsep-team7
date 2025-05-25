@@ -50,8 +50,7 @@ cv::Mat Image::getImage() {
 	return image;
 }
 
-void Image::resizeImage() {
-	while (true) {
+void Image::resizeImage(QDialog* window) {
 		cv::Mat copyImage;
 		cv::Mat originalImage;
 		std::string input;
@@ -170,25 +169,37 @@ void Image::resizeImage() {
 
 
 		cv::destroyAllWindows();
-		std::cout << "Do you want to confirm changes? [Y/N]" << std::endl;
-		std::cin >> input;
-		if (input == "N") {
-			image = originalImage;
-			width = image.cols;
-			height = image.rows;
-		}
 
-		std::cout << "Do you want to go to main menu? [Y/N]" << std::endl;
-		std::cin >> input;
+		
+		//Save image dialog
+		QDialog* save = new QDialog(window);
+		save->setWindowTitle("Save Image");
+		save->setModal(true);
+		save->setAttribute(Qt::WA_DeleteOnClose);
+		QHBoxLayout* layoutH = new QHBoxLayout();
+		QVBoxLayout* layoutV = new QVBoxLayout(save);
+		QLabel* label = new QLabel("Do you want to confirm changes?");
+		QPushButton* btnSave = new QPushButton("Save");
+		QPushButton* btnNotSave = new QPushButton("Don't save");
+		layoutH->addWidget(btnSave);
+		layoutH->addWidget(btnNotSave);
+		layoutV->addWidget(label, 0, Qt::AlignCenter);
+		layoutV->addLayout(layoutH);
+		save->setLayout(layoutV);
 
-		if (input == "Y") {
-			break;
-		}
-	}
+		QObject::connect(btnSave, &QPushButton::clicked, [=]() {
+			this->image = copyImage;
+			save->close();
+			});
+		QObject::connect(btnNotSave, &QPushButton::clicked, [=]() {
+			this->image = originalImage;
+			save->close();
+			});
+		save->exec();
+	
 }
 
-void Image::brightnessImage() {
-	while (true) {
+void Image::brightnessImage(QDialog* window) {
 		cv::Mat copyImage;
 		cv::Mat originalImage;
 		std::string input;
@@ -201,8 +212,16 @@ void Image::brightnessImage() {
 		int key = -1;
 
 
-		std::cout << "Please enter brightness range" << std::endl;
-		std::cin >> brightRange; //Personalised brightness range entry
+
+		brightRange = QInputDialog::getInt(		//input dialog for the brightness range
+			window,                           // Parent widget
+			"Brightness Range",         
+			"Enter brightness maximun absolute value (0:1000):", // Prompt
+			0,                               // Default value
+			0,                               // Minimum
+			1000,                            // Maximum
+			1								 // Step
+		);
 
 
 		//Creating windows
@@ -237,19 +256,33 @@ void Image::brightnessImage() {
 		//Final Dialog
 		cv::destroyAllWindows();
 
-		std::cout << "Do you want to confirm changes? [Y/N]" << std::endl;
-		std::cin >> input;
-		if (input == "N") {
-			image = originalImage;
-		}
 
-		std::cout << "Do you want to go to main menu? [Y/N]" << std::endl;
-		std::cin >> input;
 
-		if (input == "Y") {
-			break;
-		}
-	}
+		//Save image dialog
+		QDialog* save = new QDialog(window);
+		save->setWindowTitle("Save Image");
+		save->setModal(true);
+		save->setAttribute(Qt::WA_DeleteOnClose);
+		QHBoxLayout* layoutH = new QHBoxLayout();
+		QVBoxLayout* layoutV = new QVBoxLayout(save);
+		QLabel* label = new QLabel("Do you want to confirm changes?");
+		QPushButton* btnSave = new QPushButton("Save");
+		QPushButton* btnNotSave = new QPushButton("Don't save");
+		layoutH->addWidget(btnSave);
+		layoutH->addWidget(btnNotSave);
+		layoutV->addWidget(label, 0, Qt::AlignCenter);
+		layoutV->addLayout(layoutH);
+		save->setLayout(layoutV);
+
+		QObject::connect(btnSave, &QPushButton::clicked, [=]() {
+			this->image = changedImage.clone();
+			save->close();
+			});
+		QObject::connect(btnNotSave, &QPushButton::clicked, [=]() {
+			save->close();
+			});
+		save->exec();
+	
 }
 
 void Image::erosionImage(QDialog* window) {
@@ -535,7 +568,7 @@ void Image::cannyEdgeDetection(QDialog* window)
 		this->image = processedImage.clone();
 		save->close();
 		});
-	QObject::connect(btnSave, &QPushButton::clicked, [=]() {
+	/*QObject::connect(btnSave, &QPushButton::clicked, [=]() {
 		QString fileName = QFileDialog::getSaveFileName(save, "Save the Image");
 		if (!fileName.isEmpty()) {
 			Library library;
@@ -543,7 +576,7 @@ void Image::cannyEdgeDetection(QDialog* window)
 			library.saveImage(processedImage, filePath);
 		}
 		save->close();
-		});
+		});*/
 	QObject::connect(btnNotSave, &QPushButton::clicked, [=]() {
 		save->close();
 		});
