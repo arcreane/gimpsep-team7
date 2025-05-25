@@ -274,12 +274,54 @@ void Menu::showMenuCamera(QWidget* menuWindow) {
 
 	QObject::connect(btnAddColour, &QPushButton::clicked, [window, &magicPainter]() { //Capturing by reference instead of by value
 		window->setEnabled(false);
+
+		// Help dialog
+		QDialog* pressC = new QDialog(window);
+		pressC->setWindowTitle("Color Selection Tutorial");
+		pressC->setModal(true);
+		pressC->setAttribute(Qt::WA_DeleteOnClose);
+		QVBoxLayout* layoutHelp = new QVBoxLayout(pressC);
+		QLabel* help1 = new QLabel("Move the trackbars so that the only white thing in the mask is the color you with to paint with.");
+		QLabel* help2 = new QLabel("Move the trackbars colors to determine the color you want to paint, shown in the window color.");
+		QLabel* help3 = new QLabel("Press [C] once you have the color and mask that you desire.");
+
+		QPushButton* btnCloseHelp = new QPushButton("Continue");
+		layoutHelp->addWidget(help1);
+		layoutHelp->addWidget(help2);
+		layoutHelp->addWidget(help3);
+		layoutHelp->addWidget(btnCloseHelp);
+		QObject::connect(btnCloseHelp, &QPushButton::clicked, [=]() {
+			pressC->accept();
+			});
+		pressC->exec();
+
 		magicPainter.addColour();		
 		window->setEnabled(true);
 		});
 
 	QObject::connect(btnStartPainting, &QPushButton::clicked, [window, &magicPainter, &paintedImage, &library]() {
 		window->setEnabled(false);
+
+		// Help dialog
+		QDialog* pressC = new QDialog(window);
+		pressC->setWindowTitle("Color Selection Tutorial");
+		pressC->setModal(true);
+		pressC->setAttribute(Qt::WA_DeleteOnClose);
+		QVBoxLayout* layoutHelp = new QVBoxLayout(pressC);
+		QLabel* help1 = new QLabel("Move around the object you detected in order to paint with it.");
+		QLabel* help2 = new QLabel("Press [C] once you have the color and mask that you desire.");
+
+		QPushButton* btnCloseHelp = new QPushButton("Continue");
+		layoutHelp->addWidget(help1);
+		layoutHelp->addWidget(help2);
+		layoutHelp->addWidget(btnCloseHelp);
+		QObject::connect(btnCloseHelp, &QPushButton::clicked, [=]() {
+			pressC->accept();
+			});
+		pressC->exec();
+
+
+
 		magicPainter.startPainting(paintedImage);
 
 		QDialog* save = new QDialog(window);
