@@ -3,11 +3,14 @@
 #define BACKGROUND_H
 
 #include <opencv2/opencv.hpp>
+#include <QWidget>         
+#include <QString>        
+#include <memory>
 
 class Background {
 public:
     Background();
-    bool loadBackground();
+    bool loadBackground(QWidget* parent = nullptr);
     void run();
 
 private:

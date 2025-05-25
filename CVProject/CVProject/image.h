@@ -37,7 +37,7 @@ public:
 
 	//void stitchImages(QDialog* window);
 	//void stitchImages(const vector<Image>& images, QDialog* window);
-	void stitchImages(const vector<Image>& images);
+	void stitchImages(const vector<Image>& images, QDialog* parentWindow);
 
 	void neuralMosaic(QDialog* window);
 

@@ -10,6 +10,7 @@
 #include <QLabel>
 #include <QPixmap>
 #include <QImage>
+#include <QCoreApplication>
 
 #include "neural_mosaic.h"
 
@@ -551,9 +552,7 @@ void Image::cannyEdgeDetection(QDialog* window)
 }
 
 
-void Image::stitchImages(const vector<Image>& images) {
-//void Image::stitchImages(const vector<Image>& images, QDialog* window) {
-
+void Image::stitchImages(const vector<Image>& images, QDialog* window) {
 	vector<Mat> imgs;
 	imgs.reserve(images.size());
 
@@ -568,7 +567,7 @@ void Image::stitchImages(const vector<Image>& images) {
 	Stitcher::Status status = stitcher->stitch(imgs, pano);
 
 	if (status != Stitcher::OK) {
-		QMessageBox::critical(nullptr, "Error during stitching.", "Panorama could not be created.\nTry using better images with more texture or overlap.");
+		QMessageBox::critical(window, "Error during stitching.", "Panorama could not be created.\nTry using better images with more texture or overlap.");
 		return;
 	}
 
@@ -584,7 +583,7 @@ void Image::stitchImages(const vector<Image>& images) {
 	QPixmap pixmap = QPixmap::fromImage(qimg.copy()); // a copy
 
 	// show image ina qt dialog
-	QDialog* dialog = new QDialog;
+	QDialog* dialog = new QDialog(window);
 	//dialog->setWindowTitle("Panorama Result");
 	//dialog->setAttribute(Qt::WA_DeleteOnClose);,
 	dialog->setWindowTitle("Panorama Result");
@@ -599,49 +598,86 @@ void Image::stitchImages(const vector<Image>& images) {
 
 	//delete dialog;
 
-	// saving
+		// saving
 	QMessageBox::StandardButton reply = QMessageBox::question(
-		nullptr, "Save Panorama", "Do you want to save the panorama?",
+		window, "Save Panorama", "Do you want to save the panorama?",
 		QMessageBox::Yes | QMessageBox::No
 	);
 
 	if (reply == QMessageBox::Yes) {
+		QString filename;
 		bool ok;
-		QString filename = QInputDialog::getText(
-			nullptr, "Save Image", "Enter filename (with extension):",
-			QLineEdit::Normal, "", &ok
-		);
 
-		if (ok && !filename.isEmpty()) {
+		QString exeDir = QCoreApplication::applicationDirPath();
+		QDir imgDir(exeDir);
+		imgDir.cd("../../files/img");
+
+		do {
+			filename = QInputDialog::getText(
+				window, "Save Image", "Enter filename (with .jpg or .png extension):",
+				QLineEdit::Normal, filename, &ok
+			);
+
+			if (!ok) {
+				// User canceled input dialog
+				return;
+			}
+
+			QString trimmed = filename.trimmed();
+			QString extension = QFileInfo(trimmed).suffix().toLower();
+
+			if (trimmed.isEmpty()) {
+				QMessageBox::critical(window, "Save Error", "Filename cannot be empty.");
+			}
+			else if (extension != "jpg" && extension != "png") {
+				QMessageBox::critical(window, "Save Error", "File extension must be .jpg or .png.");
+				trimmed.clear(); // Force another loop iteration
+			}
+			else {
+				QString fullPath = imgDir.filePath(trimmed);
+
+				if (QFile::exists(fullPath)) {
+					QMessageBox::StandardButton overwriteReply = QMessageBox::question(
+						window, "File Exists",
+						"A file with this name already exists.\nDo you want to overwrite it?",
+						QMessageBox::Yes | QMessageBox::No
+					);
+
+					if (overwriteReply == QMessageBox::No) {
+						continue; // back to input
+					}
+				}
+
+				filename = trimmed; // valid, trimmed, and confirmed
+				break; // exit loop
+			}
+
+		} while (true);
+
+
+		if (ok) {
 			QByteArray utf8 = filename.toUtf8();
 			std::string cleanedStr(utf8.constData(), static_cast<size_t>(utf8.size()));
 			std::string path = "../img/" + cleanedStr;
 
-			if (!pano.empty()) {
-				bool success = cv::imwrite(path, pano);
-				if (success) {
-					QMessageBox::information(nullptr, "Saved", "Image saved to:\n" + filename);
-				}
-				else {
-					QMessageBox::critical(nullptr, "Save Error", "Failed to save image to:\n" + filename);
-				}
-			}
-		}
-		//if (ok && !filename.isEmpty()) {
-		//	QString cleaned = filename.trimmed();
-		//	std::string path = "../img/" + cleaned.toStdString();
+			QString qPath = imgDir.filePath(filename);
 
-		//	if (!pano.empty()) {
-		//		bool success = cv::imwrite(path, pano);
-		//		if (success) {
-		//			QMessageBox::information(nullptr, "Saved", "Image saved to:\n" + cleaned);
-		//		}
-		//		else {
-		//			QMessageBox::critical(nullptr, "Save Error", "Failed to save image to:\n" + cleaned);
-		//		}
-		//	}
-		//}
+			if (pano.empty()) {
+				QMessageBox::critical(window, "Save Error", "Cannot save empty image.");
+				return;
+			}
+
+			bool success = cv::imwrite(path, pano);
+			if (success) {
+				QMessageBox::information(window, "Saved", "Image saved to:\n" + qPath);
+			}
+			else {
+				QMessageBox::critical(window, "Save Error", "Failed to save image to:\n" + qPath);
+			}
+
+		}
 	}
+
 	image = pano;
 }
 

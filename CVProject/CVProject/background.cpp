@@ -1,7 +1,13 @@
-#include "background.h"
+﻿#include "background.h"
+#include "library.h"
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <iostream>
+
+#include <qapplication.h>
+#include <QDir>
+#include <qfiledialog.h>
+#include <QMessageBox>
 
 // this is a onstructor: loads Haar cascade classifier and opens default camera
 Background::Background() {
@@ -23,66 +29,136 @@ Background::Background() {
     }
 }
 
-bool Background::loadBackground() {
-    std::string fileName;
-    std::cout << "Enter background image file name with extension: ";
-    std::cin >> fileName;
+bool Background::loadBackground(QWidget* parent) {
 
-    const std::string fullPath = "../img/" + fileName;
-
-    backImage = cv::imread(fullPath, cv::IMREAD_UNCHANGED);
-    if (backImage.empty()) {
-        std::cerr << "\nError loading background image: '" << fileName << "' . Returning to menu.\n" << std::endl;
+    QString qPath = QFileDialog::getOpenFileName(
+        parent,
+        "Select background image",
+        QDir::currentPath()         
+    );
+    if (qPath.isEmpty()) {
         return false;
     }
+
+    std::string path = qPath.toUtf8().constData();
+
+    backImage = cv::imread(path, cv::IMREAD_UNCHANGED);
+    if (backImage.empty()) {
+        QMessageBox::warning(
+            parent,
+            "Error Loading Background",
+            QString("Could not load image:\n%1").arg(qPath)
+        );
+        return false;
+    }
+
     return true;
 }
 
 void Background::run() {
-    cv::Mat frame, output;
-    int photoCount = 0;
+	cv::Mat frame, output;
 
-    while (true) {
-        cap >> frame;
-        if (frame.empty()) break;
+	while (true) {
+		cap >> frame;
+		if (frame.empty()) break;
 
-        // the process of face detection and changing background
-        processFrame(frame, output);
-        cv::imshow("Background Replacement", output);
+		// ваша логика замены фона:
+		processFrame(frame, output);
 
-        char c = (char)cv::waitKey(30);
-        if (c == 'q' || c == 27) {
-            break;
-        }
+		cv::imshow("Background Replacement", output);
+		char c = (char)cv::waitKey(30);
 
-        // after pressing space decide to save a shot or not
-        else if (c == ' ') {
-            std::cout << "Do you want to save this shot? (Y/N): ";
+		if (c == 'q' || c == 27) {
+			// Q или Esc — выходим
+			break;
+		}
+		else if (c == ' ') {
+			auto ret = QMessageBox::question(
+				nullptr,
+				"Save this shot?",
+				"Do you want to save the current frame?",
+				QMessageBox::Yes | QMessageBox::No
+			);
+			if (ret == QMessageBox::Yes) {
+				// Открываем QFileDialog для выбора имени/пути
+				QString savePath = QFileDialog::getSaveFileName(
+					nullptr,
+					"Save Image",
+					QDir::currentPath(),
+					"Images (*.png *.jpg *.bmp)"
+				);
+				if (!savePath.isEmpty()) {
+					bool ok = cv::imwrite(savePath.toStdString(), output);
+					if (ok) {
+						QMessageBox::information(
+							nullptr,
+							"Saved",
+							"Image successfully saved to:\n" + savePath
+						);
+					}
+					else {
+						QMessageBox::critical(
+							nullptr,
+							"Save Error",
+							"Failed to save image to:\n" + savePath
+						);
+					}
+				}
+				// После сохранения продолжаем цикл (не выходим)
+			}
+			// если ответ No — просто продолжаем цикл
+		}
+	}
 
-            char choice;
-            std::cin >> choice;
-
-            if (choice == 'Y' || choice == 'y') {
-                std::string filename;
-                std::cout << "Enter filename (with extension): ";
-                std::cin >> filename;
-
-                std::string path = "../img/" + filename;
-                if (cv::imwrite(path, output)) {
-                    std::cout << "Saved to " << path << std::endl;
-                }
-                else {
-                    std::cerr << "Error saving " << path << std::endl;
-                }
-            }
-            else {
-                break;
-            }
-        }
-    }
-    cap.release();
-    cv::destroyAllWindows();
+	cap.release();
+	cv::destroyAllWindows();
 }
+
+//void Background::run() {
+//    cv::Mat frame, output;
+//    int photoCount = 0;
+//
+//    while (true) {
+//        cap >> frame;
+//        if (frame.empty()) break;
+//
+//        // the process of face detection and changing background
+//        processFrame(frame, output);
+//        cv::imshow("Background Replacement", output);
+//
+//        char c = (char)cv::waitKey(30);
+//        if (c == 'q' || c == 27) {
+//            break;
+//        }
+//
+//        // after pressing space decide to save a shot or not
+//        else if (c == ' ') {
+//            std::cout << "Do you want to save this shot? (Y/N): ";
+//
+//            char choice;
+//            std::cin >> choice;
+//
+//            if (choice == 'Y' || choice == 'y') {
+//                std::string filename;
+//                std::cout << "Enter filename (with extension): ";
+//                std::cin >> filename;
+//
+//                std::string path = "../img/" + filename;
+//                if (cv::imwrite(path, output)) {
+//                    std::cout << "Saved to " << path << std::endl;
+//                }
+//                else {
+//                    std::cerr << "Error saving " << path << std::endl;
+//                }
+//            }
+//            else {
+//                break;
+//            }
+//        }
+//    }
+//    cap.release();
+//    cv::destroyAllWindows();
+//}
 
 void Background::processFrame(const cv::Mat& frame, cv::Mat& output) {
     // detect faces using Haar cascade
