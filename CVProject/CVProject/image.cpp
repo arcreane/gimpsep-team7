@@ -612,35 +612,35 @@ void Image::stitchImages(const vector<Image>& images) {
 			QLineEdit::Normal, "", &ok
 		);
 
-		//if (ok && !filename.isEmpty()) {
-		//	if (pano.empty()) {
-		//		QMessageBox::critical(nullptr, "Save Error", "Cannot save empty image.");
-		//		return;
-		//	}
-		//	std::string path = "../img/" + filename.toStdString();
-		//	bool success = cv::imwrite(path, pano);
-		//	if (success) {
-		//		QMessageBox::information(nullptr, "Saved", "Image saved to:\n" + filename);
-		//	}
-		//	else {
-		//		QMessageBox::critical(nullptr, "Save Error", "Failed to save image to:\n" + filename);
-		//	}
-		//}
-
 		if (ok && !filename.isEmpty()) {
-			QString cleaned = filename.trimmed();
-			std::string path = "../img/" + cleaned.toStdString();
+			QByteArray utf8 = filename.toUtf8();
+			std::string cleanedStr(utf8.constData(), static_cast<size_t>(utf8.size()));
+			std::string path = "../img/" + cleanedStr;
 
 			if (!pano.empty()) {
 				bool success = cv::imwrite(path, pano);
 				if (success) {
-					QMessageBox::information(nullptr, "Saved", "Image saved to:\n" + cleaned);
+					QMessageBox::information(nullptr, "Saved", "Image saved to:\n" + filename);
 				}
 				else {
-					QMessageBox::critical(nullptr, "Save Error", "Failed to save image to:\n" + cleaned);
+					QMessageBox::critical(nullptr, "Save Error", "Failed to save image to:\n" + filename);
 				}
 			}
 		}
+		//if (ok && !filename.isEmpty()) {
+		//	QString cleaned = filename.trimmed();
+		//	std::string path = "../img/" + cleaned.toStdString();
+
+		//	if (!pano.empty()) {
+		//		bool success = cv::imwrite(path, pano);
+		//		if (success) {
+		//			QMessageBox::information(nullptr, "Saved", "Image saved to:\n" + cleaned);
+		//		}
+		//		else {
+		//			QMessageBox::critical(nullptr, "Save Error", "Failed to save image to:\n" + cleaned);
+		//		}
+		//	}
+		//}
 	}
 	image = pano;
 }
