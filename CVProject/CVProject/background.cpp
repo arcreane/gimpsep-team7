@@ -62,14 +62,12 @@ void Background::run(QWidget* parent) {
         cap >> frame;
         if (frame.empty()) break;
 
-        // ваша логика замены фона:
         processFrame(frame, output);
 
         cv::imshow("Capture - SPACE. EXIT - ESC", output);
         char c = (char)cv::waitKey(30);
 
         if (c == 'q' || c == 27) {
-            // Q или Esc — выходим
             break;
         }
         else if (c == 32) {

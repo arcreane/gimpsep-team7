@@ -615,10 +615,8 @@ void Image::stitchImages(const vector<Image>& images, QDialog* window) {
 	QImage qimg(pano.data, pano.cols, pano.rows, pano.step, QImage::Format_BGR888);
 	QPixmap pixmap = QPixmap::fromImage(qimg.copy()); // a copy
 
-	// show image ina qt dialog
+	// show image in a qt dialog
 	QDialog* dialog = new QDialog(window);
-	//dialog->setWindowTitle("Panorama Result");
-	//dialog->setAttribute(Qt::WA_DeleteOnClose);,
 	dialog->setWindowTitle("Panorama Result");
 
 	QVBoxLayout* layout = new QVBoxLayout(dialog);
