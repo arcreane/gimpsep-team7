@@ -304,11 +304,13 @@ void Menu::runMenu() {
 	QPushButton* btnOneImage = new QPushButton("One Image");
 	QPushButton* btnMultipleImages = new QPushButton("Multiple Images");
 	QPushButton* btnMagicPainter = new QPushButton("Magic Painter");
+	QPushButton* btnBackground = new QPushButton("Dynamic Background");
 	QPushButton* btnExit = new QPushButton("Exit");
 
 	layout->addWidget(btnOneImage);
 	layout->addWidget(btnMultipleImages);
 	layout->addWidget(btnMagicPainter);
+	layout->addWidget(btnBackground);
 	layout->addWidget(btnExit);
 
 		QObject::connect(btnOneImage, &QPushButton::clicked, [=]() {
@@ -361,6 +363,15 @@ void Menu::runMenu() {
 		menuWindow->hide(); // hide main menu
 		showMenuCamera(); // reuse existing logic
 		menuWindow->show(); // resume when sub-menu closes
+		});
+
+	QObject::connect(btnBackground, &QPushButton::clicked, [=]() {
+		menuWindow->hide();
+		Background back;
+		if (back.loadBackground()) {
+			back.run();
+		}
+		menuWindow->show();
 		});
 
 	QObject::connect(btnExit, &QPushButton::clicked, [=]() {
