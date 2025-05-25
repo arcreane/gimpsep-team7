@@ -1,16 +1,17 @@
-#include "image.h"
+﻿#include "image.h"
 #include "library.h"
 #include <opencv2/stitching.hpp>
 #include "faceDetection.h"
 
 #include <QInputDialog>
 #include <QMessageBox>
-
 #include <QDialog>
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QPixmap>
 #include <QImage>
+#include <QCoreApplication>
+
 #include "neural_mosaic.h"
 
 
@@ -571,15 +572,22 @@ void Image::cannyEdgeDetection(QDialog* window)
 }
 
 
-void Image::stitchImages(const vector<Mat>& images) {
+void Image::stitchImages(const vector<Image>& images, QDialog* window) {
+	vector<Mat> imgs;
+	imgs.reserve(images.size());
+
+	for (const auto& img : images) {
+		imgs.push_back(img.image);
+	}
+
+
 	Mat pano;
 	Ptr<Stitcher> stitcher = Stitcher::create(Stitcher::PANORAMA);
 
-	Stitcher::Status status = stitcher->stitch(images, pano);
+	Stitcher::Status status = stitcher->stitch(imgs, pano);
 
 	if (status != Stitcher::OK) {
-		cout << "\n\nError during stitching. Error code: " << int(status) << endl;
-		cout << "Try using better images with more texture or overlap.\n\n" << endl;
+		QMessageBox::critical(window, "Error during stitching.", "Panorama could not be created.\nTry using better images with more texture or overlap.");
 		return;
 	}
 
@@ -587,26 +595,108 @@ void Image::stitchImages(const vector<Mat>& images) {
 	width = image.cols;
 	height = image.rows;
 
-	cout << "Panorama created successfully" << endl;
+	// transfer pano in rgb
+	cv::Mat pano_rgb;
+	cv::cvtColor(pano, pano_rgb, cv::COLOR_BGR2RGB);
 
-	namedWindow("Panorama", WINDOW_NORMAL);
-	imshow("Panorama", pano);
-	cv::waitKey(0);
-	destroyAllWindows();
+	QImage qimg(pano.data, pano.cols, pano.rows, pano.step, QImage::Format_BGR888);
+	QPixmap pixmap = QPixmap::fromImage(qimg.copy()); // a copy
 
-	string save;
-	cout << "Do you want to save a panorama?" << endl;
-	cin >> save;
+	// show image in a qt dialog
+	QDialog* dialog = new QDialog(window);
+	dialog->setWindowTitle("Panorama Result");
 
-	if (save == "y" || save == "Y") {
-		string fileName;
+	QVBoxLayout* layout = new QVBoxLayout(dialog);
+	QLabel* label = new QLabel;
+	label->setPixmap(pixmap.scaled(800, 600, Qt::KeepAspectRatio));
+	layout->addWidget(label);
 
-		cout << "Enter filename (with extension): ";
-		cin >> fileName;
+	dialog->setLayout(layout);
+	dialog->exec();
 
-		imwrite("../img/" + fileName, pano);
-		cout << "Image saved to ../img/" + fileName  << "\n\n" << endl;
+	//delete dialog;
+
+		// saving
+	QMessageBox::StandardButton reply = QMessageBox::question(
+		window, "Save Panorama", "Do you want to save the panorama?",
+		QMessageBox::Yes | QMessageBox::No
+	);
+
+	if (reply == QMessageBox::Yes) {
+		QString filename;
+		bool ok;
+
+		QString exeDir = QCoreApplication::applicationDirPath();
+		QDir imgDir(exeDir);
+		imgDir.cd("../../files/img");
+
+		do {
+			filename = QInputDialog::getText(
+				window, "Save Image", "Enter filename (with .jpg or .png extension):",
+				QLineEdit::Normal, filename, &ok
+			);
+
+			if (!ok) {
+				// User canceled input dialog
+				return;
+			}
+
+			QString trimmed = filename.trimmed();
+			QString extension = QFileInfo(trimmed).suffix().toLower();
+
+			if (trimmed.isEmpty()) {
+				QMessageBox::critical(window, "Save Error", "Filename cannot be empty.");
+			}
+			else if (extension != "jpg" && extension != "png") {
+				QMessageBox::critical(window, "Save Error", "File extension must be .jpg or .png.");
+				trimmed.clear(); // Force another loop iteration
+			}
+			else {
+				QString fullPath = imgDir.filePath(trimmed);
+
+				if (QFile::exists(fullPath)) {
+					QMessageBox::StandardButton overwriteReply = QMessageBox::question(
+						window, "File Exists",
+						"A file with this name already exists.\nDo you want to overwrite it?",
+						QMessageBox::Yes | QMessageBox::No
+					);
+
+					if (overwriteReply == QMessageBox::No) {
+						continue; // back to input
+					}
+				}
+
+				filename = trimmed; // valid, trimmed, and confirmed
+				break; // exit loop
+			}
+
+		} while (true);
+
+
+		if (ok) {
+			QByteArray utf8 = filename.toUtf8();
+			std::string cleanedStr(utf8.constData(), static_cast<size_t>(utf8.size()));
+			std::string path = "../img/" + cleanedStr;
+
+			QString qPath = imgDir.filePath(filename);
+
+			if (pano.empty()) {
+				QMessageBox::critical(window, "Save Error", "Cannot save empty image.");
+				return;
+			}
+
+			bool success = cv::imwrite(path, pano);
+			if (success) {
+				QMessageBox::information(window, "Saved", "Image saved to:\n" + qPath);
+			}
+			else {
+				QMessageBox::critical(window, "Save Error", "Failed to save image to:\n" + qPath);
+			}
+
+		}
 	}
+
+	image = pano;
 }
 
 void Image::faceDetectionAndFilters(QDialog* window) {

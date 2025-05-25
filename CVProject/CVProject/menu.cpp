@@ -3,14 +3,14 @@
 #include "library.h"
 #include "magicPainter.h"
 #include <qapplication.h>
-
+#include "background.h"
 
 #include <qfiledialog.h>
 
 using namespace std;
 using namespace cv;
 
-void Menu::showMenuForMultipleImages(std::vector<Image> images, QWidget *menuWindow) { //This function displays operations for a set of images
+void Menu::showMenuForMultipleImages(std::vector<Image> images, QWidget* menuWindow) { //This function displays operations for a set of images
 	QDialog* window = new QDialog(menuWindow);
 	window->setWindowTitle("Multiple Images Menu");
 	window->setModal(true);
@@ -30,14 +30,11 @@ void Menu::showMenuForMultipleImages(std::vector<Image> images, QWidget *menuWin
 		}
 		});
 
-	QObject::connect(btnStitch, &QPushButton::clicked, [=]() {
-		std::vector<cv::Mat> imageMats;
-		for ( Image img : images) {
-			imageMats.push_back(img.getImage());
-		}
-
-		Image result;
-		result.stitchImages(imageMats); // your existing method
+	Image stitch;
+	QObject::connect(btnStitch, &QPushButton::clicked, [window, &stitch, &images]() {
+		window->setEnabled(false);
+		stitch.stitchImages(images, window);
+		window->setEnabled(true);
 		});
 
 	QObject::connect(btnExit, &QPushButton::clicked, window, &QWidget::close);
@@ -45,7 +42,7 @@ void Menu::showMenuForMultipleImages(std::vector<Image> images, QWidget *menuWin
 	window->setLayout(layout);
 	window->exec(); // if QDialog; or show() if QWidget
 
-	}
+}
 
 
 void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function displays operations for a single image
@@ -66,6 +63,7 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 	QPushButton* btnCEdge = new QPushButton("Canny Edge Detection");
 	QPushButton* btnNMosaic = new QPushButton("Neural Mosaic");
 	QPushButton* btnFilters = new QPushButton("Face Detection and Filters");
+	//QPushButton* btnBackground = new QPushButton("Dynamic Background");
 	QPushButton* btnExit = new QPushButton("Back to Main Menu");
 
 	layout->addWidget(label, 0, Qt::AlignCenter);
@@ -79,6 +77,7 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 	layout->addWidget(btnCEdge);
 	layout->addWidget(btnNMosaic);
 	layout->addWidget(btnFilters);
+	//layout->addWidget(btnBackground);
 	layout->addWidget(btnExit);
 
 	QObject::connect(btnShow, &QPushButton::clicked, [=]() {
@@ -151,6 +150,7 @@ void Menu::showMenuForImage(Image *image, QWidget* menuWindow) { //This function
 		image->faceDetectionAndFilters(window);
 		window->setEnabled(true);
 		});
+
 
 	QObject::connect(btnExit, &QPushButton::clicked, window, &QWidget::close);
 
@@ -424,14 +424,16 @@ void Menu::runMenu() {
 	QPushButton* btnOneImage = new QPushButton("One Image");
 	QPushButton* btnMultipleImages = new QPushButton("Multiple Images");
 	QPushButton* btnMagicPainter = new QPushButton("Magic Painter");
+	QPushButton* btnBackground = new QPushButton("Dynamic Background");
 	QPushButton* btnExit = new QPushButton("Exit");
 
 	layout->addWidget(btnOneImage);
 	layout->addWidget(btnMultipleImages);
 	layout->addWidget(btnMagicPainter);
+	layout->addWidget(btnBackground);
 	layout->addWidget(btnExit);
 
-		QObject::connect(btnOneImage, &QPushButton::clicked, [=]() {
+	QObject::connect(btnOneImage, &QPushButton::clicked, [=]() {
 		QString fileName = QFileDialog::getOpenFileName(menuWindow, "Select an Image"); //Prompts user to search for the image
 		if (!fileName.isEmpty()) {
 			Library library;
@@ -449,7 +451,7 @@ void Menu::runMenu() {
 		}
 		});
 
-		QObject::connect(btnMultipleImages, &QPushButton::clicked, [=]() {
+	QObject::connect(btnMultipleImages, &QPushButton::clicked, [=]() {
 		QStringList fileNames = QFileDialog::getOpenFileNames(menuWindow, "Select Multiple Images"); //Prompts for the user to select multiple images
 		if (!fileNames.isEmpty()) {
 			Library library;
@@ -457,7 +459,7 @@ void Menu::runMenu() {
 			for (const QString& fileName : fileNames) {
 				std::string filePath = fileName.toUtf8().constData();
 				names.push_back(filePath);
-	
+
 			}
 
 			std::vector<Image> images = library.getImages(names);
@@ -481,6 +483,15 @@ void Menu::runMenu() {
 		menuWindow->hide(); // hide main menu
 		showMenuCamera(menuWindow); // reuse existing logic
 		menuWindow->show(); // resume when sub-menu closes
+		});
+
+	QObject::connect(btnBackground, &QPushButton::clicked, [=]() {
+		menuWindow->hide();
+		Background back;
+		if (back.loadBackground(menuWindow)) {
+			back.run(menuWindow);
+		}
+		menuWindow->show();
 		});
 
 	QObject::connect(btnExit, &QPushButton::clicked, [=]() {

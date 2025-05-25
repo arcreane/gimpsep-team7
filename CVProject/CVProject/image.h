@@ -35,7 +35,7 @@ public:
 	void cannyEdgeDetection(QDialog* window);
 	void faceDetectionAndFilters(QDialog* window);
 
-	void stitchImages(const vector<Mat>& images);
+	void stitchImages(const vector<Image>& images, QDialog* parentWindow);
 
 	void neuralMosaic(QDialog* window);
 
