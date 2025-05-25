@@ -316,7 +316,7 @@ void Menu::runMenu() {
 	layout->addWidget(btnBackground);
 	layout->addWidget(btnExit);
 
-		QObject::connect(btnOneImage, &QPushButton::clicked, [=]() {
+	QObject::connect(btnOneImage, &QPushButton::clicked, [=]() {
 		QString fileName = QFileDialog::getOpenFileName(menuWindow, "Select an Image"); //Prompts user to search for the image
 		if (!fileName.isEmpty()) {
 			Library library;
@@ -334,7 +334,7 @@ void Menu::runMenu() {
 		}
 		});
 
-		QObject::connect(btnMultipleImages, &QPushButton::clicked, [=]() {
+	QObject::connect(btnMultipleImages, &QPushButton::clicked, [=]() {
 		QStringList fileNames = QFileDialog::getOpenFileNames(menuWindow, "Select Multiple Images"); //Prompts for the user to select multiple images
 		if (!fileNames.isEmpty()) {
 			Library library;
@@ -342,7 +342,7 @@ void Menu::runMenu() {
 			for (const QString& fileName : fileNames) {
 				std::string filePath = fileName.toUtf8().constData();
 				names.push_back(filePath);
-	
+
 			}
 
 			std::vector<Image> images = library.getImages(names);
@@ -369,28 +369,13 @@ void Menu::runMenu() {
 		});
 
 	QObject::connect(btnBackground, &QPushButton::clicked, [=]() {
-		//QDialog* window = new QDialog();
-		//QString fileName = QFileDialog::getOpenFileName(window, "Select a new Image"); //Prompts user to search for the image
-			//if (!fileName.isEmpty()) {
-			//	Library library;
-			//	std::string filePath = fileName.toUtf8().constData();
-			//	cv::Mat newImage = library.getImage(filePath);
-			//	if (newImage.empty()) {
-			//		QMessageBox::warning(window, "Error", QString("Image %1 could not be loaded.").arg(fileName));
-			//	}
-			//	else {
-			//		*image = Image(newImage);
-			//	}
-
-			//}
-
 		menuWindow->hide();
 		Background back;
 		if (back.loadBackground(menuWindow)) {
-			back.run();
+			back.run(menuWindow);
 		}
 		menuWindow->show();
-	});
+		});
 
 	QObject::connect(btnExit, &QPushButton::clicked, [=]() {
 		menuWindow->close();

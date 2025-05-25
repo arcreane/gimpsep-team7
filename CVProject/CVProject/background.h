@@ -11,7 +11,7 @@ class Background {
 public:
     Background();
     bool loadBackground(QWidget* parent = nullptr);
-    void run();
+    void run(QWidget* parent);
 
 private:
     cv::Mat backImage;

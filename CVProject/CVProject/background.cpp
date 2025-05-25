@@ -34,7 +34,7 @@ bool Background::loadBackground(QWidget* parent) {
     QString qPath = QFileDialog::getOpenFileName(
         parent,
         "Select background image",
-        QDir::currentPath()         
+        QDir::currentPath()
     );
     if (qPath.isEmpty()) {
         return false;
@@ -55,110 +55,86 @@ bool Background::loadBackground(QWidget* parent) {
     return true;
 }
 
-void Background::run() {
-	cv::Mat frame, output;
+void Background::run(QWidget* parent) {
+    cv::Mat frame, output;
 
-	while (true) {
-		cap >> frame;
-		if (frame.empty()) break;
+    while (true) {
+        cap >> frame;
+        if (frame.empty()) break;
 
-		// ваша логика замены фона:
-		processFrame(frame, output);
+        // ваша логика замены фона:
+        processFrame(frame, output);
 
-		cv::imshow("Background Replacement", output);
-		char c = (char)cv::waitKey(30);
+        cv::imshow("Capture - SPACE. EXIT - ESC", output);
+        char c = (char)cv::waitKey(30);
 
-		if (c == 'q' || c == 27) {
-			// Q или Esc — выходим
-			break;
-		}
-		else if (c == ' ') {
-			auto ret = QMessageBox::question(
-				nullptr,
-				"Save this shot?",
-				"Do you want to save the current frame?",
-				QMessageBox::Yes | QMessageBox::No
-			);
-			if (ret == QMessageBox::Yes) {
-				// Открываем QFileDialog для выбора имени/пути
-				QString savePath = QFileDialog::getSaveFileName(
-					nullptr,
-					"Save Image",
-					QDir::currentPath(),
-					"Images (*.png *.jpg *.bmp)"
-				);
-				if (!savePath.isEmpty()) {
-					bool ok = cv::imwrite(savePath.toStdString(), output);
-					if (ok) {
-						QMessageBox::information(
-							nullptr,
-							"Saved",
-							"Image successfully saved to:\n" + savePath
-						);
-					}
-					else {
-						QMessageBox::critical(
-							nullptr,
-							"Save Error",
-							"Failed to save image to:\n" + savePath
-						);
-					}
-				}
-				// После сохранения продолжаем цикл (не выходим)
-			}
-			// если ответ No — просто продолжаем цикл
-		}
-	}
+        if (c == 'q' || c == 27) {
+            // Q или Esc — выходим
+            break;
+        }
+        else if (c == 32) {
 
-	cap.release();
-	cv::destroyAllWindows();
+            // Save image dialog
+            QDialog saveDialog(parent);
+            saveDialog.setWindowTitle("Save Image");
+            saveDialog.setModal(true);
+
+            QVBoxLayout* layoutV = new QVBoxLayout(&saveDialog);
+            QHBoxLayout* layoutH = new QHBoxLayout();
+
+            QLabel* label2 = new QLabel("Do you want to save the image?", &saveDialog);
+            QPushButton* btnSave = new QPushButton("Save as new", &saveDialog);
+            QPushButton* btnNotSave = new QPushButton("Don't save", &saveDialog);
+
+            layoutH->addWidget(btnSave);
+            layoutH->addWidget(btnNotSave);
+            layoutV->addWidget(label2, 0, Qt::AlignCenter);
+            layoutV->addLayout(layoutH);
+
+            bool saveConfirmed = false;
+
+            QObject::connect(btnSave, &QPushButton::clicked, [&]() {
+                while (true) {
+                    QString fileName = QFileDialog::getSaveFileName(&saveDialog, "Save the Image");
+
+                    if (fileName.isEmpty()) {
+                        // User canceled the dialog
+                        break;
+                    }
+
+                    QString trimmed = fileName.trimmed();
+                    QString extension = QFileInfo(trimmed).suffix().toLower();
+
+                    if (extension != "jpg" && extension != "png") {
+                        QMessageBox::critical(parent, "Save Error", "File extension must be .jpg or .png.");
+                        trimmed.clear(); // Force another loop iteration
+                        //saveDialog.reject();
+                    }
+                    else {
+                        QByteArray utf8 = trimmed.toUtf8();
+                        std::string path(utf8.constData(), static_cast<size_t>(utf8.size()));
+
+                        cv::imwrite(path, output);
+                        saveConfirmed = true;
+                        saveDialog.accept();
+                        break;
+                    }
+                }
+                });
+
+
+            QObject::connect(btnNotSave, &QPushButton::clicked, [&]() {
+                saveDialog.reject();
+                });
+
+            saveDialog.exec();
+
+        }
+    }
+
+    cap.release();
+    cv::destroyAllWindows();
 }
-
-//void Background::run() {
-//    cv::Mat frame, output;
-//    int photoCount = 0;
-//
-//    while (true) {
-//        cap >> frame;
-//        if (frame.empty()) break;
-//
-//        // the process of face detection and changing background
-//        processFrame(frame, output);
-//        cv::imshow("Background Replacement", output);
-//
-//        char c = (char)cv::waitKey(30);
-//        if (c == 'q' || c == 27) {
-//            break;
-//        }
-//
-//        // after pressing space decide to save a shot or not
-//        else if (c == ' ') {
-//            std::cout << "Do you want to save this shot? (Y/N): ";
-//
-//            char choice;
-//            std::cin >> choice;
-//
-//            if (choice == 'Y' || choice == 'y') {
-//                std::string filename;
-//                std::cout << "Enter filename (with extension): ";
-//                std::cin >> filename;
-//
-//                std::string path = "../img/" + filename;
-//                if (cv::imwrite(path, output)) {
-//                    std::cout << "Saved to " << path << std::endl;
-//                }
-//                else {
-//                    std::cerr << "Error saving " << path << std::endl;
-//                }
-//            }
-//            else {
-//                break;
-//            }
-//        }
-//    }
-//    cap.release();
-//    cv::destroyAllWindows();
-//}
 
 void Background::processFrame(const cv::Mat& frame, cv::Mat& output) {
     // detect faces using Haar cascade
