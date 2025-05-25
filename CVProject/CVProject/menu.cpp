@@ -3,7 +3,7 @@
 #include "library.h"
 #include "magicPainter.h"
 #include <qapplication.h>
-
+#include "background.h"
 
 #include <qfiledialog.h>
 
