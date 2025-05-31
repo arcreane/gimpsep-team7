@@ -23,9 +23,11 @@ public:
 	std::vector<cv::Rect> getSmiles();
 
 	cv::Mat detectFaces();
-	void selectFilter(QDialog* window);
+	
 	void overlayImage(cv::Point pos);
 	void applyFilterEyes(int yOffset = 0);
 	void applyFilterSmile(double scale = 1, int yOffset = 0);
+	bool loadFilter(const std::string& path, QVBoxLayout* layout, QPushButton* btn);
+	void selectFilter(QDialog* window);
 	void applyFilter();
 };

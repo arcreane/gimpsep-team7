@@ -158,6 +158,16 @@ void faceDetection::applyFilterSmile(double scale, int yOffset)
 	overlayImage(cv::Point(filterX, filterY));
 }
 
+bool faceDetection::loadFilter(const std::string& filter_img, QVBoxLayout* layout, QPushButton* btn) {
+	this->filter = cv::imread("../img/" + filter_img , cv::IMREAD_UNCHANGED);
+	if (this->filter.empty()) {
+		this->filter_id = -1; //Set to -1 to avoid applying the filter
+		layout->replaceWidget(btn, new QPushButton("Error loading filter image"));
+		return false;
+	}
+	return true;
+}
+
 void faceDetection::selectFilter(QDialog* window)
 {
 	QDialog* filterSel = new QDialog(window);
@@ -167,73 +177,46 @@ void faceDetection::selectFilter(QDialog* window)
 	QVBoxLayout* layout = new QVBoxLayout(window);
 	QPushButton* btnPixelated = new QPushButton("Pixelated Sunglasses");
 	QPushButton* btnPink = new QPushButton("Pink Sunglasses");
-	QPushButton* btnTranparent = new QPushButton("Transparent Sunglasses");
+	QPushButton* btnTransparent = new QPushButton("Transparent Sunglasses");
 	QPushButton* btnSmallMoustache = new QPushButton("Small Moustache");
 	QPushButton* btnBigMoustache = new QPushButton("Big Moustache");
-	QPushButton* btnDogTongue = new QPushButton("Dog Tongue");
+	QPushButton* btnTongue = new QPushButton("Dog Tongue");
+	QPushButton* btnFaulty = new QPushButton("Faulty Filter");
 	QPushButton* btnExit = new QPushButton("Exit");
 	layout->addWidget(btnPixelated);
 	layout->addWidget(btnPink);
-	layout->addWidget(btnTranparent);
+	layout->addWidget(btnTransparent);
 	layout->addWidget(btnSmallMoustache);
 	layout->addWidget(btnBigMoustache);
-	layout->addWidget(btnDogTongue);
+	layout->addWidget(btnTongue);
+	layout->addWidget(btnFaulty);
 	layout->addWidget(btnExit);
 	QObject::connect(btnPixelated, &QPushButton::clicked, [=]() {
 		this->filter_id = 1;
-		this->filter = cv::imread("../img/pixelated_sunglasses.png", cv::IMREAD_UNCHANGED);
-		if (this->filter.empty()) {
-			this->filter_id = -1; //Set to -1 to avoid applying the filter
-			layout->replaceWidget(btnPixelated, new QPushButton("Error loading filter image"));
-		}
-		else {
-			filterSel->close();
-		}
+		if(loadFilter("pixelated_sunglasses.png", layout, btnPixelated)) filterSel->close();
 		});
 	QObject::connect(btnPink, &QPushButton::clicked, [=]() {
 		this->filter_id = 2;
-		this->filter = cv::imread("../img/pink_sunglasses.png", cv::IMREAD_UNCHANGED);
-		if (this->filter.empty()) {
-			this->filter_id = -1; //Set to -1 to avoid applying the filter
-			layout->replaceWidget(btnPixelated, new QPushButton("Error loading filter image"));
-		}
-		filterSel->close();
+		if(loadFilter("pink_sunglasses.png", layout, btnPink)) filterSel->close();
 		});
-	QObject::connect(btnTranparent, &QPushButton::clicked, [=]() {
+	QObject::connect(btnTransparent, &QPushButton::clicked, [=]() {
 		this->filter_id = 3;
-		this->filter = cv::imread("../img/transparent_glasses.png", cv::IMREAD_UNCHANGED);
-		if (this->filter.empty()) {
-			this->filter_id = -1; //Set to -1 to avoid applying the filter
-			layout->replaceWidget(btnPixelated, new QPushButton("Error loading filter image"));
-		}
-		filterSel->close();
+		if(loadFilter("transparent_glasses.png", layout, btnTransparent)) filterSel->close();
 		});
 	QObject::connect(btnSmallMoustache, &QPushButton::clicked, [=]() {
 		this->filter_id = 4;
-		this->filter = cv::imread("../img/moustache.png", cv::IMREAD_UNCHANGED);
-		if (this->filter.empty()) {
-			this->filter_id = -1; //Set to -1 to avoid applying the filter
-			layout->replaceWidget(btnPixelated, new QPushButton("Error loading filter image"));
-		}
-		filterSel->close();
+		if(loadFilter("moustache.png", layout, btnSmallMoustache)) filterSel->close();
 		});
 	QObject::connect(btnBigMoustache, &QPushButton::clicked, [=]() {
 		this->filter_id = 5;
-		this->filter = cv::imread("../img/moustache.png", cv::IMREAD_UNCHANGED);
-		if (this->filter.empty()) {
-			this->filter_id = -1; //Set to -1 to avoid applying the filter
-			layout->replaceWidget(btnPixelated, new QPushButton("Error loading filter image"));
-		}
-		filterSel->close();
+		if(loadFilter("moustache.png", layout, btnBigMoustache)) filterSel->close();
 		});
-	QObject::connect(btnDogTongue, &QPushButton::clicked, [=]() {
+	QObject::connect(btnTongue, &QPushButton::clicked, [=]() {
 		this->filter_id = 6;
-		this->filter = cv::imread("../img/dog.png", cv::IMREAD_UNCHANGED);
-		if (this->filter.empty()) {
-			this->filter_id = -1; //Set to -1 to avoid applying the filter
-			layout->replaceWidget(btnPixelated, new QPushButton("Error loading filter image"));
-		}
-		filterSel->close();
+		if(loadFilter("dog.png", layout, btnTongue)) filterSel->close();
+		});
+	QObject::connect(btnFaulty, &QPushButton::clicked, [=]() {
+		loadFilter("", layout, btnFaulty);
 		});
 	QObject::connect(btnExit, &QPushButton::clicked, [=]() {
 		this->filter_id = -1;
