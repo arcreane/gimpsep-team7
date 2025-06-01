@@ -1,8 +1,16 @@
-#ifndef NEURAL_MOSAIC_H
-#define NEURAL_MOSAIC_H
-
+#pragma once
 #include <opencv2/opencv.hpp>
 
-cv::Mat applyNeuralMosaic(const cv::Mat& input, int rows, int cols);
+class NeuralMosaicEffect {
+public:
+    NeuralMosaicEffect(int rows = 10, int cols = 10);
+    cv::Mat apply(const cv::Mat& input);
 
-#endif // NEURAL_MOSAIC_H
+private:
+    int rows_, cols_;
+    cv::Mat applyEffect(const cv::Mat& tile, int effect);
+
+};
+
+// Optional backward-compatible wrapper
+cv::Mat applyNeuralMosaic(const cv::Mat& input, int rows = 10, int cols = 10);

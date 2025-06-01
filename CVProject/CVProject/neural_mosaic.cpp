@@ -1,10 +1,61 @@
-#include <opencv2/opencv.hpp>
+#include "neural_mosaic.h"
 #include <opencv2/photo.hpp>
+#include <numeric>
+#include <algorithm>
+#include <cstdlib>
 #include <ctime>
 
-cv::Mat applyEffectToTile(const cv::Mat& tile, int effect) {
-    cv::Mat result;
+// Optional wrapper
+cv::Mat applyNeuralMosaic(const cv::Mat& input, int rows, int cols) {
+    NeuralMosaicEffect mosaic(rows, cols);
+    return mosaic.apply(input);
+}
 
+
+NeuralMosaicEffect::NeuralMosaicEffect(int rows, int cols)
+    : rows_(rows), cols_(cols) {
+    srand(static_cast<unsigned>(time(NULL)));
+}
+
+cv::Mat NeuralMosaicEffect::apply(const cv::Mat& input) {
+    cv::Mat output = input.clone();
+
+    std::vector<cv::Point2f> points;
+    for (int i = 0; i < rows_ * cols_; ++i)
+        points.emplace_back(rand() % input.cols, rand() % input.rows);
+
+    cv::Subdiv2D subdiv(cv::Rect(0, 0, input.cols, input.rows));
+    for (const auto& p : points) subdiv.insert(p);
+
+    std::vector<std::vector<cv::Point2f>> facets;
+    std::vector<cv::Point2f> centers;
+    subdiv.getVoronoiFacetList({}, facets, centers);
+
+    for (const auto& facet : facets) {
+        std::vector<cv::Point> polygon;
+        for (const auto& pt : facet) polygon.emplace_back(pt);
+
+        cv::Mat mask = cv::Mat::zeros(input.size(), CV_8UC1);
+        cv::fillConvexPoly(mask, polygon, 255);
+
+        cv::Rect bounds = cv::boundingRect(polygon) & cv::Rect(0, 0, input.cols, input.rows);
+        if (bounds.width <= 1 || bounds.height <= 1) continue;
+
+        cv::Mat tile;
+        input(bounds).copyTo(tile, mask(bounds));
+
+        int effectID = rand() % 22;
+        cv::Mat filtered = applyEffect(tile, effectID);
+
+        filtered.copyTo(output(bounds), mask(bounds));
+
+    }
+
+    return output;
+}
+
+cv::Mat NeuralMosaicEffect::applyEffect(const cv::Mat& tile, int effect) {
+    cv::Mat result;
     switch (effect) {
         case 0: cv::stylization(tile, result); break;
         case 1: cv::detailEnhance(tile, result, 10, 0.15f); break;
@@ -15,7 +66,9 @@ cv::Mat applyEffectToTile(const cv::Mat& tile, int effect) {
             cv::bilateralFilter(safe, result, 9, 150, 150);
             break;
         }
-        case 4: {
+        case 4:
+        case 10:
+        case 12: {
             cv::Mat temp1, temp2;
             tile.convertTo(temp1, CV_8UC3);
             for (int i = 0; i < 3; ++i) {
@@ -49,31 +102,11 @@ cv::Mat applyEffectToTile(const cv::Mat& tile, int effect) {
             break;
         }
         case 9: cv::boxFilter(tile, result, -1, cv::Size(7, 7)); break;
-        case 10: {
-            cv::Mat temp1, temp2;
-            tile.convertTo(temp1, CV_8UC3);
-            for (int i = 0; i < 3; ++i) {
-                cv::bilateralFilter(temp1, temp2, 9, 75, 75);
-                temp1 = temp2.clone();
-            }
-            result = temp1;
-            break;
-        }
         case 11: {
             cv::Mat gray;
             cv::cvtColor(tile, gray, cv::COLOR_BGR2GRAY);
             cv::cvtColor(gray, result, cv::COLOR_GRAY2BGR);
             cv::edgePreservingFilter(result, result, cv::RECURS_FILTER, 50, 0.2f);
-            break;
-        }
-        case 12: {
-            cv::Mat temp1, temp2;
-            tile.convertTo(temp1, CV_8UC3);
-            for (int i = 0; i < 3; ++i) {
-                cv::bilateralFilter(temp1, temp2, 9, 75, 75);
-                temp1 = temp2.clone();
-            }
-            result = temp1;
             break;
         }
         case 13: {
@@ -166,52 +199,5 @@ cv::Mat applyEffectToTile(const cv::Mat& tile, int effect) {
             result = tile.clone();
             break;
     }
-
     return result;
-}
-
-cv::Mat applyNeuralMosaic(const cv::Mat& input, int rows = 10, int cols = 10) {
-    cv::Mat output = input.clone();
-    srand((unsigned) time(NULL));
-
-    // Step 1: Generate seed points
-    std::vector<cv::Point2f> points;
-    for (int i = 0; i < rows * cols; ++i) {
-        points.emplace_back(rand() % input.cols, rand() % input.rows);
-    }
-
-    // Step 2: Voronoi tessellation
-    cv::Subdiv2D subdiv(cv::Rect(0, 0, input.cols, input.rows));
-    for (const auto& p : points) subdiv.insert(p);
-
-    std::vector<std::vector<cv::Point2f>> facets;
-    std::vector<cv::Point2f> centers;
-    subdiv.getVoronoiFacetList({}, facets, centers);
-
-    // Step 3: Apply effects
-    for (const auto& facet : facets) {
-        std::vector<cv::Point> polygon;
-        for (const auto& pt : facet) polygon.emplace_back(pt);
-
-        // Create mask
-        cv::Mat mask = cv::Mat::zeros(input.size(), CV_8UC1);
-        cv::fillConvexPoly(mask, polygon, 255);
-
-        // Extract region
-        cv::Rect bounds = cv::boundingRect(polygon) & cv::Rect(0, 0, input.cols, input.rows);
-        if (bounds.width <= 1 || bounds.height <= 1) continue;
-
-        cv::Mat tile, maskedTile;
-        input(bounds).copyTo(tile, mask(bounds));
-
-
-        // Apply effect
-        int choice = rand() % 22;
-        cv::Mat filtered = applyEffectToTile(tile, choice);
-
-        // Blend into output using mask
-        filtered.copyTo(output(bounds), mask(bounds));
-    }
-
-    return output;
 }
