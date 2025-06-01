@@ -57,12 +57,15 @@ bool Background::loadBackground(QWidget* parent) {
 
 void Background::run(QWidget* parent) {
     cv::Mat frame, output;
+    int photoCount = 0;
 
     while (true) {
         cap >> frame;
         if (frame.empty()) break;
 
+        // the process of face detection and changing background
         processFrame(frame, output);
+        cv::imshow("Background Replacement", output);
 
         cv::imshow("Capture - SPACE. EXIT - ESC", output);
         char c = (char)cv::waitKey(30);
@@ -98,7 +101,7 @@ void Background::run(QWidget* parent) {
                     if (fileName.isEmpty()) {
                         // User canceled the dialog
                         break;
-                    }
+                }
 
                     QString trimmed = fileName.trimmed();
                     QString extension = QFileInfo(trimmed).suffix().toLower();
@@ -107,16 +110,16 @@ void Background::run(QWidget* parent) {
                         QMessageBox::critical(parent, "Save Error", "File extension must be .jpg or .png.");
                         trimmed.clear(); // Force another loop iteration
                         //saveDialog.reject();
-                    }
-                    else {
+            }
+            else {
                         QByteArray utf8 = trimmed.toUtf8();
                         std::string path(utf8.constData(), static_cast<size_t>(utf8.size()));
 
                         cv::imwrite(path, output);
                         saveConfirmed = true;
                         saveDialog.accept();
-                        break;
-                    }
+                break;
+            }
                 }
                 });
 
