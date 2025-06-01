@@ -139,12 +139,10 @@
     <ClCompile Include="faceDetection.cpp" />
     <ClCompile Include="image.cpp" />
     <ClCompile Include="library.cpp" />
-    <ClCompile Include="lighting.cpp" />
     <ClCompile Include="magicPainter.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="neural_mosaic.cpp" />
-    <ClCompile Include="resize.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="background.h" />
