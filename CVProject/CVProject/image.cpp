@@ -812,13 +812,23 @@ void Image::neuralMosaic(QDialog* window) {
     QVBoxLayout* vLayout = new QVBoxLayout(&previewDialog);
     QLabel* label = new QLabel(&previewDialog);
 
-    QImage qimg = matToQImage(*result);
-    if (qimg.isNull()) {
-        QMessageBox::warning(window, "Error", "Unable to display preview image.");
-        return;
-    }
+	QImage qimg = matToQImage(*result);
+	if (qimg.isNull()) {
+		QMessageBox::warning(window, "Error", "Unable to display preview image.");
+		return;
+	}
 
-    label->setPixmap(QPixmap::fromImage(qimg));
+	QSize maxPreviewSize(800, 600); // Adjust as needed
+	QImage scaledQimg = qimg;
+	if (qimg.width() > maxPreviewSize.width() || qimg.height() > maxPreviewSize.height()) {
+		scaledQimg = qimg.scaled(maxPreviewSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+	}
+	label->setPixmap(QPixmap::fromImage(scaledQimg));
+	label->setAlignment(Qt::AlignCenter);
+
+	previewDialog.setMinimumSize(maxPreviewSize);
+	previewDialog.setMaximumSize(maxPreviewSize);
+
     vLayout->addWidget(label);
 
     QHBoxLayout* btnLayout = new QHBoxLayout();
