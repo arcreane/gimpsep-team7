@@ -780,8 +780,10 @@ void Image::neuralMosaic(QDialog* window) {
     int cols = QInputDialog::getInt(window, "Neural Mosaic", "Enter number of columns:", 10, 1, 100, 1, &ok);
     if (!ok) return;
 
-    std::unique_ptr<cv::Mat> result = std::make_unique<cv::Mat>(applyNeuralMosaic(this->image, rows, cols));
-    if (result->empty()) {
+	NeuralMosaicEffect mosaic(rows, cols);
+	std::unique_ptr<cv::Mat> result = std::make_unique<cv::Mat>(mosaic.apply(this->image));
+
+	if (result->empty()) {
         QMessageBox::warning(window, "Error", "Resulting image is empty!");
         return;
     }
